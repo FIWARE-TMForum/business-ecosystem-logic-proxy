@@ -19,7 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var proxyquire = require('proxyquire');
+var proxyquire = require('proxyquire').noPreserveCache();
+var nock = require('nock');
 
 var testUtils = require('../../utils');
 const { updateBody } = require('../../../lib/utils');
@@ -62,6 +63,12 @@ describe('Party API', function() {
 
     var loggedIn;
     var config = testUtils.getDefaultConfig();
+    config.searchUrl = '';
+    const catalogServer = (config.endpoints.catalog.appSsl ? 'https' : 'http') +
+        '://' +
+        config.endpoints.catalog.host +
+        ':' +
+        config.endpoints.catalog.port;
     var utils = {
         validateLoggedIn: function(req, callback) {
             if (loggedIn) {
@@ -73,10 +80,24 @@ describe('Party API', function() {
         updateBody: function(req, body) {return ;}
     };
 
-    const buildPartyAPI = (conf, phone) => {
+    const buildPartyAPI = (conf, phone, operatorId, search) => {
         const tmfUtils = {
             isValidPhoneNumber: function(_) {
                 return phone;
+            }
+        };
+        const operator = {
+            operator: {
+                getOperatorId: function() {
+                    return operatorId;
+                }
+            }
+        };
+        const searchStub = search || {
+            searchEngine: {
+                searchOrganizations: function() {
+                    return Promise.resolve([]);
+                }
             }
         };
         return proxyquire('../../../controllers/tmf-apis/party', {
@@ -84,10 +105,16 @@ describe('Party API', function() {
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/utils': utils,
             './../../lib/tmfUtils': tmfUtils,
+            './../../lib/operator': operator,
+            './../../lib/search': searchStub
         }).party;
     }
 
     const partyAPI = buildPartyAPI(config, true);
+
+    afterEach(function() {
+        nock.cleanAll();
+    });
 
     describe('Party', function() {
         var failIfNotLoggedIn = function(method, done) {
@@ -111,6 +138,333 @@ describe('Party API', function() {
 
                 partyAPI.checkPermissions(req, function(err) {
                     expect(err).toBe(null);
+                    done();
+                });
+            });
+
+            it('should enable filtered pagination for launched organization list requests', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2&fields=tradingName',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2',
+                        fields: 'tradingName'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(req.apiUrl).toBe('/party/organization?limit=2&fields=tradingName');
+                    expect(req.query).toEqual({
+                        limit: '2',
+                        fields: 'tradingName'
+                    });
+
+                    const paginationConfig = partyAPI.getFilteredPaginationConfig(req);
+                    expect(paginationConfig).not.toBeNull();
+                    expect(typeof paginationConfig.predicate).toBe('function');
+                    done();
+                });
+            });
+
+            it('should use organization search instead of filtered pagination when search is enabled', function(done) {
+                const searchConfig = Object.assign({}, config, {
+                    searchUrl: 'http://search.com'
+                });
+                const searchOrganizations = jasmine.createSpy('searchOrganizations').and.returnValue(Promise.resolve([
+                    { id: 'org-1' },
+                    { id: 'org-2' }
+                ]));
+                const partyLib = buildPartyAPI(searchConfig, true, null, {
+                    searchEngine: {
+                        searchOrganizations: searchOrganizations
+                    }
+                });
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&offset=10&limit=2&fields=tradingName',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        offset: '10',
+                        limit: '2',
+                        fields: 'tradingName'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(searchOrganizations).toHaveBeenCalledWith({}, {
+                        offset: '10',
+                        pageSize: '2'
+                    }, false);
+                    expect(req.apiUrl).toBe('/party/organization?id=org-1,org-2&limit=2&fields=tradingName');
+                    expect(req.query).toEqual({
+                        id: 'org-1,org-2',
+                        limit: '2',
+                        fields: 'tradingName'
+                    });
+                    expect(partyLib.getFilteredPaginationConfig(req)).toBeNull();
+                    done();
+                });
+            });
+
+            it('should rewrite launched organization list to empty id query when search has no results', function(done) {
+                const searchConfig = Object.assign({}, config, {
+                    searchUrl: 'http://search.com'
+                });
+                const searchOrganizations = jasmine.createSpy('searchOrganizations').and.returnValue(Promise.resolve([]));
+                const partyLib = buildPartyAPI(searchConfig, true, null, {
+                    searchEngine: {
+                        searchOrganizations: searchOrganizations
+                    }
+                });
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(req.apiUrl).toBe('/party/organization?id=null&limit=2');
+                    expect(req.query).toEqual({
+                        id: 'null',
+                        limit: '2'
+                    });
+                    expect(partyLib.getFilteredPaginationConfig(req)).toBeNull();
+                    done();
+                });
+            });
+
+            it('should fail launched organization list requests when enabled search cannot be reached', function(done) {
+                const searchConfig = Object.assign({}, config, {
+                    searchUrl: 'http://search.com'
+                });
+                const partyLib = buildPartyAPI(searchConfig, true, null, {
+                    searchEngine: {
+                        searchOrganizations: function() {
+                            return Promise.reject(new Error('search unavailable'));
+                        }
+                    }
+                });
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toEqual({
+                        status: 400,
+                        message: 'Error accessing search indexes'
+                    });
+                    done();
+                });
+            });
+
+            it('should accept organizations with launched product offerings', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    const paginationConfig = partyAPI.getFilteredPaginationConfig(req);
+
+                    nock(catalogServer)
+                        .get(config.endpoints.catalog.apiPath + '/productOffering')
+                        .query({
+                            'relatedParty.id': 'org-accept',
+                            lifecycleStatus: 'Launched',
+                            limit: '1'
+                        })
+                        .reply(200, [{ id: 'offering-1' }]);
+
+                    paginationConfig.predicate({
+                        id: 'org-accept'
+                    }).then(function(result) {
+                        expect(result).toBe(true);
+                        done();
+                    }).catch(done.fail);
+                });
+            });
+
+            it('should reject organizations without launched product offerings', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    const paginationConfig = partyAPI.getFilteredPaginationConfig(req);
+
+                    nock(catalogServer)
+                        .get(config.endpoints.catalog.apiPath + '/productOffering')
+                        .query({
+                            'relatedParty.id': 'org-reject',
+                            lifecycleStatus: 'Launched',
+                            limit: '1'
+                        })
+                        .reply(200, []);
+
+                    paginationConfig.predicate({
+                        id: 'org-reject'
+                    }).then(function(result) {
+                        expect(result).toBe(false);
+                        done();
+                    }).catch(done.fail);
+                });
+            });
+
+            it('should reject the marketplace operator without checking catalog offers', function(done) {
+                const partyLib = buildPartyAPI(config, true, 'org-operator');
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyLib.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    const paginationConfig = partyLib.getFilteredPaginationConfig(req);
+
+                    paginationConfig.predicate({
+                        id: 'org-operator'
+                    }).then(function(result) {
+                        expect(result).toBe(false);
+                        expect(nock.pendingMocks()).toEqual([]);
+                        done();
+                    }).catch(done.fail);
+                });
+            });
+
+            it('should cache accepted organization offer checks', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    const paginationConfig = partyAPI.getFilteredPaginationConfig(req);
+
+                    const scope = nock(catalogServer)
+                        .get(config.endpoints.catalog.apiPath + '/productOffering')
+                        .query({
+                            'relatedParty.id': 'org-cache-accept',
+                            lifecycleStatus: 'Launched',
+                            limit: '1'
+                        })
+                        .reply(200, [{ id: 'offering-1' }]);
+
+                    paginationConfig.predicate({
+                        id: 'org-cache-accept'
+                    }).then(function(firstResult) {
+                        expect(firstResult).toBe(true);
+                        return paginationConfig.predicate({
+                            id: 'org-cache-accept'
+                        });
+                    }).then(function(secondResult) {
+                        expect(secondResult).toBe(true);
+                        expect(scope.isDone()).toBe(true);
+                        done();
+                    }).catch(done.fail);
+                });
+            });
+
+            it('should cache rejected organization offer checks', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    const paginationConfig = partyAPI.getFilteredPaginationConfig(req);
+
+                    const scope = nock(catalogServer)
+                        .get(config.endpoints.catalog.apiPath + '/productOffering')
+                        .query({
+                            'relatedParty.id': 'org-cache-reject',
+                            lifecycleStatus: 'Launched',
+                            limit: '1'
+                        })
+                        .reply(200, []);
+
+                    paginationConfig.predicate({
+                        id: 'org-cache-reject'
+                    }).then(function(firstResult) {
+                        expect(firstResult).toBe(false);
+                        return paginationConfig.predicate({
+                            id: 'org-cache-reject'
+                        });
+                    }).then(function(secondResult) {
+                        expect(secondResult).toBe(false);
+                        expect(scope.isDone()).toBe(true);
+                        done();
+                    }).catch(done.fail);
+                });
+            });
+
+            it('should not enable filtered pagination for organization list requests with other lifecycle status', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/organization?lifecycleStatus=Active&limit=2',
+                    query: {
+                        lifecycleStatus: 'Active',
+                        limit: '2'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(req.apiUrl).toBe('/party/organization?lifecycleStatus=Active&limit=2');
+                    expect(partyAPI.getFilteredPaginationConfig(req)).toBeNull();
+                    done();
+                });
+            });
+
+            it('should not enable filtered pagination for individual list requests', function(done) {
+                var req = {
+                    method: 'GET',
+                    apiUrl: '/party/individual?lifecycleStatus=Launched&limit=2',
+                    query: {
+                        lifecycleStatus: 'Launched',
+                        limit: '2'
+                    }
+                };
+
+                partyAPI.checkPermissions(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(partyAPI.getFilteredPaginationConfig(req)).toBeNull();
                     done();
                 });
             });

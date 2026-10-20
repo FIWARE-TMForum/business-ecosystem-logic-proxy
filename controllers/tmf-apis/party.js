@@ -20,16 +20,206 @@
  */
 
 const async = require('async')
+const axios = require('axios')
 const config = require('./../../config')
+const LRU = require('lru-cache')
 const url = require('url')
 const utils = require('./../../lib/utils')
 const logger = require('./../../lib/logger').logger.getLogger('TMF')
 const tmfUtils = require('./../../lib/tmfUtils')
 const partyClient = require('./../../lib/party').partyClient
+const operatorClient = require('./../../lib/operator').operator
+const searchEngine = require('./../../lib/search').searchEngine
 
 
 const party = (function() {
+    const LIFE_CYCLE = 'lifecycleStatus'
+    const LAUNCHED_STATE = 'launched'
+    const launchedOrganizationOfferFilter = '_launchedOrganizationOfferFilter'
+    const launchedOfferCache = new LRU({
+        max: 1000,
+        maxAge: 1000 * 60 * 5
+    })
+    const organizationListPattern = new RegExp(
+        '^/' + config.endpoints.party.path + '/organization/?$'
+    )
+
+    const isOrganizationListRequest = function(req) {
+        const apiPath = url.parse(req.apiUrl || '').pathname
+        return organizationListPattern.test(apiPath)
+    }
+
+    const getQueryParam = function(req, name) {
+        if (req.query && req.query[name] != null) {
+            return req.query[name]
+        }
+
+        return url.parse(req.apiUrl || '', true).query[name]
+    }
+
+    const isLaunchedQuery = function(req) {
+        const lifecycleStatus = getQueryParam(req, LIFE_CYCLE)
+        return lifecycleStatus != null && String(lifecycleStatus).toLowerCase() === LAUNCHED_STATE
+    }
+
+    const removeLifecycleStatusQuery = function(req) {
+        const parsedUrl = url.parse(req.apiUrl || '')
+        const params = new URLSearchParams(parsedUrl.query || '')
+
+        params.delete(LIFE_CYCLE)
+
+        const queryString = params.toString()
+        req.apiUrl = parsedUrl.pathname + (queryString ? '?' + queryString : '')
+
+        if (req.query) {
+            delete req.query[LIFE_CYCLE]
+        }
+    }
+
+    const buildSearchPage = function(req) {
+        const page = {}
+        const offset = getQueryParam(req, 'offset')
+        const limit = getQueryParam(req, 'limit')
+
+        if (offset != null) {
+            page.offset = offset
+        }
+
+        if (limit != null) {
+            page.pageSize = limit
+        }
+
+        return page
+    }
+
+    const rewriteOrganizationQueryFromSearch = function(req, result) {
+        const ids = result.map((hit) => {
+            return hit.id
+        }).filter((id) => {
+            return id != null
+        })
+        const id = ids.length > 0 ? ids.join(',') : 'null'
+        const limit = getQueryParam(req, 'limit') != null ? getQueryParam(req, 'limit') : (ids.length > 0 ? String(ids.length) : null)
+        const fields = getQueryParam(req, 'fields')
+        const query = {
+            id: id
+        }
+        const params = new URLSearchParams()
+
+        params.set('id', id)
+
+        if (limit != null) {
+            query.limit = String(limit)
+            params.set('limit', query.limit)
+        }
+
+        if (fields != null) {
+            query.fields = fields
+            params.set('fields', fields)
+        }
+
+        req.query = query
+        req.apiUrl = '/' + config.endpoints.party.path + '/organization?' + params.toString().replace(/%2C/g, ',')
+    }
+
+    const normalizeCatalogError = function(err) {
+        return {
+            status: err && err.response && err.response.status ? err.response.status : 504,
+            message: 'Service unreachable'
+        }
+    }
+
+    const retrieveCatalogAsset = function(assetPath) {
+        const uri = utils.getAPIURL(
+            config.endpoints.catalog.appSsl,
+            config.endpoints.catalog.host,
+            config.endpoints.catalog.port,
+            `${config.endpoints.catalog.apiPath}${assetPath}`
+        )
+
+        return axios.get(uri).then((response) => {
+            return {
+                status: response.status,
+                body: response.data
+            }
+        }).catch((err) => {
+            throw normalizeCatalogError(err)
+        })
+    }
+
+    const hasLaunchedProductOffering = function(organization) {
+        const organizationId = organization && organization.id
+
+        if (!organizationId) {
+            logger.debug('Organization launched-offer filter rejected organization: missing id')
+            return Promise.resolve(false)
+        }
+
+        const operatorId = operatorClient.getOperatorId()
+        if (operatorId && organizationId === operatorId) {
+            logger.debug('Organization launched-offer filter rejected organization: marketplace operator')
+            return Promise.resolve(false)
+        }
+
+        const cachedHasOffers = launchedOfferCache.get(organizationId)
+
+        if (cachedHasOffers != null) {
+            logger.debug(
+                'Organization launched-offer filter cache hit for organization ' +
+                organizationId +
+                ': hasLaunchedOffers=' + cachedHasOffers
+            )
+            return Promise.resolve(cachedHasOffers)
+        }
+
+        const offersPath = '/productOffering?relatedParty.id=' +
+            encodeURIComponent(organizationId) +
+            '&lifecycleStatus=Launched&limit=1'
+
+        logger.debug('Organization launched-offer filter checking organization ' + organizationId + ' with URL ' + offersPath)
+
+        return retrieveCatalogAsset(offersPath).then((result) => {
+            const hasOffers = Array.isArray(result.body) && result.body.length > 0
+            launchedOfferCache.set(organizationId, hasOffers)
+
+            logger.debug(
+                'Organization launched-offer filter ' + (hasOffers ? 'accepted' : 'rejected') +
+                ' organization ' + organizationId +
+                ': launchedOffers=' + (Array.isArray(result.body) ? result.body.length : 'non-list')
+            )
+
+            return hasOffers
+        }).catch((err) => {
+            logger.warn(
+                'Organization launched-offer filter failed checking organization ' +
+                organizationId +
+                ': status=' + (err.status || 'unknown')
+            )
+            throw err
+        })
+    }
+
     const validateAllowed = function(req, callback) {
+        if (isOrganizationListRequest(req) && isLaunchedQuery(req)) {
+            if (config.searchUrl) {
+                searchEngine.searchOrganizations({}, buildSearchPage(req), false)
+                    .then((result) => {
+                        rewriteOrganizationQueryFromSearch(req, result)
+                        callback(null)
+                    })
+                    .catch(() => {
+                        callback({
+                            status: 400,
+                            message: 'Error accessing search indexes'
+                        })
+                    })
+                return
+            }
+
+            req[launchedOrganizationOfferFilter] = true
+            removeLifecycleStatusQuery(req)
+        }
+
         callback(null);
     };
 
@@ -160,8 +350,26 @@ const party = (function() {
         }
     };
 
+    const getFilteredPaginationConfig = function(req) {
+        if (req.method !== 'GET' || req[launchedOrganizationOfferFilter] !== true) {
+            logger.debug(
+                'Organization launched-offer filtered pagination disabled for URL ' + req.apiUrl +
+                ': isGet=' + (req.method === 'GET') +
+                ', filter=' + (req[launchedOrganizationOfferFilter] === true)
+            )
+            return null
+        }
+
+        logger.info('Organization launched-offer filtered pagination enabled for URL ' + req.apiUrl)
+
+        return {
+            predicate: hasLaunchedProductOffering
+        }
+    }
+
     return {
-        checkPermissions: checkPermissions
+        checkPermissions: checkPermissions,
+        getFilteredPaginationConfig: getFilteredPaginationConfig
     };
 })();
 

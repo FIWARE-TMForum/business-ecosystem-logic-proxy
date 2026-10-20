@@ -1,0 +1,24 @@
+{
+  "PLATFORM": {
+    "CATALOGS": {
+      "_hero_title_1": "Find the ",
+      "_hero_title_accent": "right provider",
+      "_hero_title_2": " for your needs.",
+      "_hero_subtitle": "Discover verified providers offering innovative digital services and solutions across industries.",
+      "_all_providers": "All providers",
+      "_bc_current": "Providers catalog"
+    }
+  },
+  "CATALOGS": {
+    "_hero_title_1": "Find the ",
+    "_hero_title_accent": "right provider",
+    "_hero_title_2": " for your needs.",
+    "_hero_subtitle": "Discover verified providers offering innovative digital services and solutions across industries.",
+    "_all_providers": "All providers",
+    "_bc_current": "Providers catalog"
+  },
+  "CREATE_OFFER": {
+    "_cant_find_cat_title": "Can't find the right category?",
+    "_cant_find_cat_text": "Contact our support team at <strong>support&#64;dome-marketplace.eu</strong> and we'll help you classify your product correctly."
+  }
+}

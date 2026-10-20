@@ -41,6 +41,7 @@ const buildRequestJWT = require('./lib/strategies/vc').buildRequestJWT
 const simulator = require('./controllers/simulator').simulator();
 const { indexes } = require('./lib/indexes')
 const operator = require('./lib/operator').operator
+const { filteredPagination } = require('./lib/filteredPagination')
 
 const debug = !(process.env.NODE_ENV == 'production');
 const SEARCH_FILTERS_COLLECTION = 'config'
@@ -50,6 +51,7 @@ const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
 const FEATURE_FLAGS = [
     'purchaseEnabled',
     'dataSpaceEnabled',
+    'catalogManagementEnabled',
     'dspEnabled',
     'quotesEnabled',
     'tenderingEnabled',
@@ -169,7 +171,8 @@ app.use(function(req, res, next) {
     'use strict';
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'HEAD, POST, GET, PATCH, PUT, OPTIONS, DELETE');
-    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization, x-terms-accepted');
+    res.header('Access-Control-Allow-Headers', 'origin, content-type, X-Auth-Token, Tenant-ID, Authorization, X-Organization, x-terms-accepted, ' + filteredPagination.TOKEN_HEADER_LOWER);
+    res.header('Access-Control-Expose-Headers', filteredPagination.TOKEN_HEADER_LOWER);
     if (config.corsExposeRedirect) {
         res.header('Access-Control-Expose-Headers', 'X-Redirect-URL');
     }
@@ -373,6 +376,32 @@ const getDefaultSearchFilters = () => {
     }
 }
 
+const normalizeSearchFilterDefaults = (searchFilters) => {
+    const normalized = Object.assign({}, searchFilters)
+
+    if (Array.isArray(searchFilters.filters)) {
+        normalized.filters = searchFilters.filters.map((filter) => {
+            if (filter == null || typeof filter !== 'object' || Array.isArray(filter)) {
+                return filter
+            }
+
+            if (filter.source !== 'categoryRoot') {
+                return filter
+            }
+
+            if (Object.prototype.hasOwnProperty.call(filter, 'offerFormPlacement')) {
+                return filter
+            }
+
+            return Object.assign({}, filter, {
+                offerFormPlacement: 'none'
+            })
+        })
+    }
+
+    return normalized
+}
+
 const fetchSearchFilters = async () => {
     try {
         const result = await indexes.search(SEARCH_FILTERS_COLLECTION, { id: SEARCH_FILTERS_CONFIG_ID, limit: 1 })
@@ -381,7 +410,7 @@ const fetchSearchFilters = async () => {
             return getDefaultSearchFilters()
         }
 
-        return result[0].searchFilters
+        return normalizeSearchFilterDefaults(result[0].searchFilters)
     } catch (e) {
         return getDefaultSearchFilters()
     }
@@ -467,12 +496,14 @@ app.delete('/domeblog/:id',  authMiddleware.headerAuthentication, failIfNotAuthe
 config.defaultId = await fetchData()
 await fetchFeatureFlags()
 await admin.loadAnalyticsConfig()
+await admin.loadSearchConfig()
 app.get('/config', async (_, res) => {
     // Reload the defaultId if it has been during the operation
     config.defaultId = await fetchData()
     const searchFilters = await fetchSearchFilters()
     const featureFlags = await fetchFeatureFlags()
     const analyticsConfig = await admin.loadAnalyticsConfig()
+    const searchConfig = await admin.loadSearchConfig()
 
     res.send({
         ai: {
@@ -505,7 +536,7 @@ app.get('/config', async (_, res) => {
         matomoId: config.matomoId,
         matomoUrl: config.matomoUrl,
         googleTagManagerId: config.googleTagManagerId,
-        searchEnabled: config.searchUrl != '',
+        searchEnabled: searchConfig.searchUrl !== '',
         domeTrust: config.domeTrust,
         domeAbout: config.domeAbout,
         domeRegister: config.domeRegister,
@@ -516,6 +547,7 @@ app.get('/config', async (_, res) => {
         domePublish: config.domePublish,
         purchaseEnabled: featureFlags.purchaseEnabled,
         dataSpaceEnabled: featureFlags.dataSpaceEnabled,
+        catalogManagementEnabled: featureFlags.catalogManagementEnabled,
         dspEnabled: featureFlags.dspEnabled,
         quoteApi: config.quoteApi,
         defaultId: config.defaultId,
@@ -533,6 +565,7 @@ app.get('/config', async (_, res) => {
 })
 
 app.get('/stats', stats.getStats)
+app.get('/stats/provider/:organizationId', stats.getProviderStats)
 
 app.post('/analytics/guest-token', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, failIfNotAuthenticated, async (req, res, next) => {
     await admin.loadAnalyticsConfig()
@@ -684,12 +717,24 @@ app.post('/admin/defaultcatalog', authMiddleware.headerAuthentication, authMiddl
     admin.updateDefaultCatalog(req, res)
 })
 
+app.post('/admin/defaultcatalog/create', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.createDefaultCatalog(req, res)
+})
+
 app.patch('/config/filters', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     admin.updateSearchFiltersConfig(req, res)
 })
 
 app.patch('/config/features', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
     admin.updateFeatureFlagsConfig(req, res)
+})
+
+app.get('/config/search', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.getSearchConfig(req, res)
+})
+
+app.patch('/config/search', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {
+    admin.updateSearchConfig(req, res)
 })
 
 app.get('/config/analytics', authMiddleware.headerAuthentication, authMiddleware.checkOrganizations, authMiddleware.setPartyObj, (req, res) => {

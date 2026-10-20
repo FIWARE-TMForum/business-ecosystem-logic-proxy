@@ -19,6 +19,7 @@
 
 const axios = require('axios')
 const config = require('./../config')
+const tmfUtils = require('./../lib/tmfUtils')
 const utils = require('./../lib/utils')
 const uuidv4 = require('uuid').v4
 const { indexes } = require('./../lib/indexes')
@@ -31,9 +32,14 @@ const FEATURE_FLAGS_COLLECTION = 'config'
 const FEATURE_FLAGS_CONFIG_ID = 'feature-flags'
 const ANALYTICS_CONFIG_COLLECTION = 'config'
 const ANALYTICS_CONFIG_ID = 'analytics'
+const SEARCH_CONFIG_COLLECTION = 'config'
+const SEARCH_CONFIG_ID = 'search'
+
+const OFFER_FORM_PLACEMENTS = ['none', 'generalInfo', 'categorySection']
 const FEATURE_FLAGS = [
     'purchaseEnabled',
     'dataSpaceEnabled',
+    'catalogManagementEnabled',
     'dspEnabled',
     'quotesEnabled',
     'tenderingEnabled',
@@ -131,6 +137,63 @@ function admin() {
         config.analyticsSuperset.url = config.analytics
 
         return getAnalyticsConfigResponse()
+    }
+
+    const getDefaultSearchConfig = function() {
+        return {
+            searchUrl: typeof config.searchUrl === 'string' ? config.searchUrl : '',
+            useQueryKeyword: false
+        }
+    }
+
+    const getSearchConfigResponse = function() {
+        return {
+            searchUrl: typeof config.searchUrl === 'string' ? config.searchUrl : '',
+            useQueryKeyword: config.useQueryKeyword === true
+        }
+    }
+
+    const applySearchConfig = function(searchConfig) {
+        config.searchUrl = searchConfig.searchUrl
+        config.useQueryKeyword = searchConfig.useQueryKeyword === true
+
+        return getSearchConfigResponse()
+    }
+
+    const validateAndNormalizeSearchConfig = function(body, requireUseQueryKeyword) {
+        const errors = []
+
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                errors: ['Body must be a JSON object'],
+                value: null
+            }
+        }
+
+        let searchUrl = null
+        if (typeof body.searchUrl !== 'string') {
+            errors.push('searchUrl is required and must be a string')
+        } else {
+            searchUrl = body.searchUrl.trim()
+        }
+
+        if (typeof body.useQueryKeyword !== 'boolean' && requireUseQueryKeyword) {
+            errors.push('useQueryKeyword is required and must be a boolean')
+        } else if (body.useQueryKeyword != null && typeof body.useQueryKeyword !== 'boolean') {
+            errors.push('useQueryKeyword must be a boolean')
+        }
+
+        if (errors.length > 0) {
+            return { errors: errors, value: null }
+        }
+
+        return {
+            errors: [],
+            value: {
+                searchUrl: searchUrl,
+                useQueryKeyword: body.useQueryKeyword === true
+            }
+        }
     }
 
     const validateAndNormalizeAnalyticsConfig = function(body) {
@@ -241,6 +304,56 @@ function admin() {
         }
     }
 
+    const getCatalogApiUrl = function(path) {
+        return `${utils.getAPIProtocol('catalog')}://${utils.getAPIHost('catalog')}:${utils.getAPIPort('catalog')}${utils.getAPIPath('catalog')}${path}`
+    }
+
+    const saveDefaultCatalogId = async function(catalogId) {
+        const result = await indexes.search('defaultcatalog', {})
+        const mongoFb = {
+            default_id: catalogId
+        }
+        if (result.length > 0) {
+            await indexes.updateDocument('defaultcatalog', result[0].id, mongoFb)
+        } else {
+            await indexes.indexDocument('defaultcatalog', uuidv4(), mongoFb)
+        }
+    }
+
+    const validateAndNormalizeDefaultCatalog = function(body) {
+        if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+            return {
+                error: 'Body must be a JSON object',
+                value: null
+            }
+        }
+
+        const name = normalizeNonEmptyString(body.name)
+        if (name == null) {
+            return {
+                error: 'name is required and must be non-empty',
+                value: null
+            }
+        }
+
+        const description = normalizeNonEmptyString(body.description)
+        if (description == null) {
+            return {
+                error: 'description is required and must be non-empty',
+                value: null
+            }
+        }
+
+        return {
+            error: null,
+            value: {
+                name: name,
+                description: description,
+                lifecycleStatus: 'Launched'
+            }
+        }
+    }
+
     const validateOption = function(option, filterName, optionIndex, errors) {
         if (option == null || typeof option !== 'object' || Array.isArray(option)) {
             errors.push(`filters[${filterName}].children[${optionIndex}] must be an object`)
@@ -301,6 +414,13 @@ function admin() {
             errors.push(`filters[${index}].source must be one of: configured, categoryRoot`)
         }
 
+        const offerFormPlacement = Object.prototype.hasOwnProperty.call(filter, 'offerFormPlacement') ? filter.offerFormPlacement : 'none'
+        if (!OFFER_FORM_PLACEMENTS.includes(offerFormPlacement)) {
+            errors.push(`filters[${index}].offerFormPlacement must be one of: none, generalInfo, categorySection`)
+        } else if (source === 'configured' && offerFormPlacement !== 'none') {
+            errors.push(`filters[${index}].offerFormPlacement must be none when source is configured`)
+        }
+
         let normalizedChildren = []
         if (source === 'configured') {
             if ('children' in filter && !Array.isArray(filter.children)) {
@@ -342,6 +462,7 @@ function admin() {
         if (source === 'configured') {
             normalizedFilter.children = normalizedChildren
         } else if (source === 'categoryRoot') {
+            normalizedFilter.offerFormPlacement = offerFormPlacement
             normalizedFilter.rootName = filter.rootName.trim()
         }
 
@@ -397,6 +518,11 @@ function admin() {
         const normalizedFilters = body.filters.map((filter, index) => {
             return validateFilter(filter, index, errors)
         }).filter((filter) => filter != null)
+
+        const generalInfoFilters = normalizedFilters.filter((filter) => filter.offerFormPlacement === 'generalInfo')
+        if (generalInfoFilters.length > 1) {
+            errors.push('Only one filter may use offerFormPlacement generalInfo')
+        }
 
         if (errors.length > 0) {
             return { errors: errors, value: null }
@@ -590,17 +716,7 @@ function admin() {
 
         // Update the default catalog
         try {
-            const result = await indexes.search('defaultcatalog', {})
-            const mongoFb = {
-                default_id: catalogId
-            }
-            if (result.length > 0) {
-                // Update the existing document
-                await indexes.updateDocument('defaultcatalog', result[0].id, mongoFb)
-            } else {
-                // Create a new document
-                await indexes.indexDocument('defaultcatalog', uuidv4(), mongoFb)
-            }
+            await saveDefaultCatalogId(catalogId)
         } catch (e) {
             res.status(500)
             res.json({ error: 'Error updating default catalog: ' + e.message })
@@ -608,6 +724,90 @@ function admin() {
         }
 
         res.status(200).end()
+    }
+
+    const createDefaultCatalog = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeDefaultCatalog(reqBody)
+        if (validationResult.error != null) {
+            res.status(400)
+            res.json({
+                error: validationResult.error
+            })
+            return
+        }
+
+        const catalogBody = validationResult.value
+        try {
+            await tmfUtils.attachRelatedPartyObj('operatorCatalog', catalogBody, req.user)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Error processing party information: ' + e.message })
+            return
+        }
+
+        if (!req.headers) {
+            req.headers = {}
+        }
+        utils.attachUserHeaders(req.headers, req.user)
+
+        const options = {
+            url: getCatalogApiUrl('/catalog'),
+            method: 'POST',
+            headers: Object.assign(utils.proxiedRequestHeaders(req), {
+                'content-type': 'application/json',
+                'content-length': Buffer.byteLength(JSON.stringify(catalogBody)).toString()
+            }),
+            data: catalogBody
+        }
+
+        let catalogCreated
+        let status
+        try {
+            const response = await axios.request(options)
+            catalogCreated = response.data
+            status = response.status
+        } catch (e) {
+            if (e.response) {
+                res.status(e.response.status)
+                res.json(e.response.data)
+            } else {
+                res.status(504)
+                res.json({ error: 'Service unreachable' })
+            }
+            return
+        }
+
+        if (!catalogCreated || !catalogCreated.id) {
+            res.status(502)
+            res.json({ error: 'Catalog API did not return a catalog id' })
+            return
+        }
+
+        try {
+            await saveDefaultCatalogId(catalogCreated.id)
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating default catalog: ' + e.message })
+            return
+        }
+
+        res.status(status)
+        res.json(catalogCreated)
     }
 
     const updateSearchFiltersConfig = async function(req, res) {
@@ -732,6 +932,98 @@ function admin() {
         }
     }
 
+    const loadSearchConfig = async function() {
+        try {
+            const result = await indexes.search(SEARCH_CONFIG_COLLECTION, { id: SEARCH_CONFIG_ID, limit: 1 })
+
+            if (result.length === 0) {
+                return applySearchConfig(getDefaultSearchConfig())
+            }
+
+            if (result[0].search == null) {
+                return applySearchConfig({
+                    searchUrl: '',
+                    useQueryKeyword: false
+                })
+            }
+
+            const validationResult = validateAndNormalizeSearchConfig(result[0].search, false)
+            if (validationResult.errors.length > 0) {
+                logger.error('Invalid search config stored in database: ' + validationResult.errors.join(', '))
+                return applySearchConfig(getDefaultSearchConfig())
+            }
+
+            return applySearchConfig(validationResult.value)
+        } catch (e) {
+            logger.error('Error loading search config: ' + e.message)
+            return getSearchConfigResponse()
+        }
+    }
+
+    const updateSearchConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        let reqBody
+        try {
+            reqBody = parseBody(req.body)
+        } catch (e) {
+            res.status(400)
+            res.json({ error: 'Invalid body' })
+            return
+        }
+
+        const validationResult = validateAndNormalizeSearchConfig(reqBody, true)
+        if (validationResult.errors.length > 0) {
+            res.status(400)
+            res.json({
+                error: 'Invalid search config payload',
+                details: validationResult.errors
+            })
+            return
+        }
+
+        let responseBody
+        try {
+            const result = await indexes.search(SEARCH_CONFIG_COLLECTION, { id: SEARCH_CONFIG_ID, limit: 1 })
+
+            if (result.length > 0) {
+                await indexes.updateDocument(SEARCH_CONFIG_COLLECTION, result[0].id, {
+                    search: validationResult.value
+                })
+            } else {
+                await indexes.indexDocument(SEARCH_CONFIG_COLLECTION, SEARCH_CONFIG_ID, {
+                    search: validationResult.value
+                })
+            }
+
+            responseBody = applySearchConfig(validationResult.value)
+        } catch (e) {
+            res.status(500)
+            res.json({ error: 'Error updating search config: ' + e.message })
+            return
+        }
+
+        res.status(200)
+        res.json(responseBody)
+    }
+
+    const getSearchConfig = async function(req, res) {
+        if (!utils.isAdmin(req.user)) {
+            res.status(403)
+            res.json({ error: "You are not authorized to access admin endpoint" })
+            return
+        }
+
+        const responseBody = await loadSearchConfig()
+
+        res.status(200)
+        res.json(responseBody)
+    }
+
     const updateAnalyticsConfig = async function(req, res) {
         if (!utils.isAdmin(req.user)) {
             res.status(403)
@@ -800,8 +1092,12 @@ function admin() {
         checkPermissions: checkPermissions,
         uploadCertificate: uploadCertificate,
         updateDefaultCatalog: updateDefaultCatalog,
+        createDefaultCatalog: createDefaultCatalog,
         updateSearchFiltersConfig: updateSearchFiltersConfig,
         updateFeatureFlagsConfig: updateFeatureFlagsConfig,
+        getSearchConfig: getSearchConfig,
+        updateSearchConfig: updateSearchConfig,
+        loadSearchConfig: loadSearchConfig,
         getAnalyticsConfig: getAnalyticsConfig,
         updateAnalyticsConfig: updateAnalyticsConfig,
         loadAnalyticsConfig: loadAnalyticsConfig
