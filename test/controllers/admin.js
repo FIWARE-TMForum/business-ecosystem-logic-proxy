@@ -1318,7 +1318,6 @@ describe('Admin Controller', () => {
         config.quotesEnabled = true
         config.tenderingEnabled = true
         config.launchValidationEnabled = false
-        config.aiEnabled = false
         config.tenderDevButtonsOpenCloseEnabled = false
     }
 
@@ -1348,8 +1347,7 @@ describe('Admin Controller', () => {
                 purchaseEnabled: false,
                 catalogManagementEnabled: false,
                 dspEnabled: true,
-                quotesEnabled: false,
-                aiEnabled: true
+                quotesEnabled: false
             })
         }
 
@@ -1361,7 +1359,6 @@ describe('Admin Controller', () => {
             quotesEnabled: false,
             tenderingEnabled: true,
             launchValidationEnabled: false,
-            aiEnabled: true,
             tenderDevButtonsOpenCloseEnabled: false
         }
 
@@ -1381,8 +1378,7 @@ describe('Admin Controller', () => {
                     purchaseEnabled: false,
                     catalogManagementEnabled: false,
                     dspEnabled: true,
-                    quotesEnabled: false,
-                    aiEnabled: true
+                    quotesEnabled: false
                 }
             })
             expect(response.status).toHaveBeenCalledWith(200)
@@ -1390,12 +1386,11 @@ describe('Admin Controller', () => {
             expect(config.purchaseEnabled).toBe(false)
             expect(config.catalogManagementEnabled).toBe(false)
             expect(config.dspEnabled).toBe(true)
-            expect(config.aiEnabled).toBe(true)
             done()
         })
     })
 
-    it('should merge feature flag updates with existing overrides', (done) => {
+    it('should merge feature flag updates and ignore retired flags stored in the database', (done) => {
         setFeatureFlagDefaults()
 
         const searchMock = jasmine.createSpy('search').and.returnValue(Promise.resolve([{
@@ -1437,7 +1432,6 @@ describe('Admin Controller', () => {
             quotesEnabled: true,
             tenderingEnabled: true,
             launchValidationEnabled: true,
-            aiEnabled: true,
             tenderDevButtonsOpenCloseEnabled: false
         }
 
@@ -1453,7 +1447,6 @@ describe('Admin Controller', () => {
             expect(updateMock).toHaveBeenCalledWith('config', 'doc-1', {
                 features: {
                     purchaseEnabled: false,
-                    aiEnabled: true,
                     dataSpaceEnabled: false,
                     catalogManagementEnabled: false,
                     launchValidationEnabled: true

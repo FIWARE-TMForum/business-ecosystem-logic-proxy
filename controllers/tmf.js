@@ -40,7 +40,6 @@ const { billing } = require('./tmf-apis/billing')
 const { revenue } = require('./tmf-apis/revenue')
 const { invoicing } = require('./tmf-apis/invoicing')
 const { search } = require('./tmf-apis/search')
-const { ai } = require('./tmf-apis/ai')
 
 // Other dependencies
 const logger = require('./../lib/logger').logger.getLogger('TMF')
@@ -74,7 +73,6 @@ function tmf() {
 	apiControllers[config.endpoints.revenue.path] = revenue;
 	apiControllers[config.endpoints.invoicing.path] = invoicing;
 	apiControllers[config.endpoints.search.path] = search;
-	apiControllers[config.endpoints.ai.path] = ai;
 
 	const newApis = [
 		config.endpoints.party.path,
@@ -92,8 +90,7 @@ function tmf() {
 		config.endpoints.document.path,
 		config.endpoints.revenue.path,
 		config.endpoints.invoicing.path,
-		config.endpoints.search.path,
-		config.endpoints.ai.path
+		config.endpoints.search.path
 	]
 
 	const getAPIName = function(apiUrl) {
@@ -172,13 +169,6 @@ function tmf() {
 			method: req.method,
 			headers: utils.proxiedRequestHeaders(req)
 		};
-
-		// Keep AI HTTPS calls isolated from incoming host header and allow
-		// explicit proxy bypass for AI calls.
-		if (api === config.endpoints.ai.path && url.startsWith('https://')) {
-			delete options.headers.host;
-			options.proxy = false;
-		}
 
 		if (req.headers['content-type']?.startsWith('multipart/form-data')) {
 			// Multipart requests need to be rebuild
