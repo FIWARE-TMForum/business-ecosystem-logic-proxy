@@ -6,7 +6,6 @@ const recommendationService = require('./controllers/recommendationService').rec
 const promotionService = require('./controllers/promotionService').promotionService;
 const idpService = require('./controllers/idpsService').idpService;
 const bodyParser = require('body-parser');
-const base64url = require('base64url');
 const config = require('./config');
 const constants = require('constants');
 const cookieParser = require('cookie-parser');
@@ -59,8 +58,9 @@ const FEATURE_FLAGS = [
     'tenderDevButtonsOpenCloseEnabled'
 ]
 
-// OAuth2 Came From Field
-const OAUTH2_CAME_FROM_FIELD = 'came_from_path';
+// Session field holding the pending OAuth2 states, keyed by a random token,
+// mapped to the path the user should be redirected back to after login
+const OAUTH2_STATE_SESSION_FIELD = 'oauth2States';
 
 const PORT = config.https.enabled
 	? config.https.port || 443 // HTTPS
@@ -192,16 +192,31 @@ app.use(function(req, res, next) {
 ////////////////////////////// PASSPORT /////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-var getOAuth2State = function(path) {
-    var state = {};
-    state[OAUTH2_CAME_FROM_FIELD] = path;
-    var encodedState = base64url(JSON.stringify(state));
-    return encodedState;
+// Generates a random, single-use state token and stashes the "came from"
+// path server-side (in the user's own session) keyed by that token, so the
+// value sent to the IdP is unpredictable and never repeats across attempts
+var getOAuth2State = function(req, path) {
+    var state = uuidv4();
+
+    req.session[OAUTH2_STATE_SESSION_FIELD] = req.session[OAUTH2_STATE_SESSION_FIELD] || {};
+    req.session[OAUTH2_STATE_SESSION_FIELD][state] = path;
+
+    return state;
+};
+
+// Looks up and consumes (single-use) the path stored for a given state token
+var consumeOAuth2State = function(req, state) {
+    var states = req.session[OAUTH2_STATE_SESSION_FIELD] || {};
+    var path = states[state];
+
+    delete states[state];
+
+    return path !== undefined ? path : '/';
 };
 
 var ensureAuthenticated = function(req, res, next) {
     if (!req.isAuthenticated()) {
-        var encodedState = getOAuth2State(req.url);
+        var encodedState = getOAuth2State(req, req.url);
         // This action will redirect the user the FIWARE Account portal,
         // so the next callback is not required to be called
 
@@ -243,7 +258,7 @@ if (!config.siop.enabled) {
 
     // Handler for default logging
     app.all(config.logInPath, function(req, res) {
-        var encodedState = getOAuth2State(utils.getCameFrom(req));
+        var encodedState = getOAuth2State(req, utils.getCameFrom(req));
 
         passport.authenticate(config.oauth2.provider, { scope: auth.getScope(), state: encodedState })(req, res);
     });
@@ -251,8 +266,7 @@ if (!config.siop.enabled) {
     // Handler for the callback
     app.get('/auth/' + config.oauth2.provider + '/callback', passport.authenticate(config.oauth2.provider, { failureRedirect: '/error' }), function(req, res) {
         console.log(' =========================================================================================== ')
-        var state = JSON.parse(base64url.decode(req.query.state));
-        var redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
+        var redirectPath = consumeOAuth2State(req, req.query.state);
 
         if (config.externalPortal == null || config.externalPortal == ''){
             // Using local new GUI
@@ -279,7 +293,7 @@ const addIdpStrategy = async (idp) => {
         console.log("--------------------------- Loggin");
         console.log(idp);
         console.log(extAuth);
-        const encodedState = getOAuth2State(utils.getCameFrom(req));
+        const encodedState = getOAuth2State(req, utils.getCameFrom(req));
 
         passport.authenticate(idp.idpId, { scope: extAuth.getScope(), state: encodedState })(req, res);
     });
@@ -287,8 +301,7 @@ const addIdpStrategy = async (idp) => {
     // Handler for the callback
     console.log(`/auth/${idp.idpId}/callback`);
     app.get(`/auth/${idp.idpId}/callback`, passport.authenticate(idp.idpId, { failureRedirect: '/error' }), function(req, res) {
-        const state = JSON.parse(base64url.decode(req.query.state));
-        const redirectPath = state[OAUTH2_CAME_FROM_FIELD] !== undefined ? state[OAUTH2_CAME_FROM_FIELD] : '/';
+        const redirectPath = consumeOAuth2State(req, req.query.state);
 
         res.redirect(redirectPath);
     });
