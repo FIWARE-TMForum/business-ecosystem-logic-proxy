@@ -2345,7 +2345,12 @@ const catalog = (function() {
                     const sortParty = (p1, p2) => {
                         return p1.id > p2.id ? 1 : p2.id > p1.id ? -1 : 0;
                     };
-                    if ( parsedBody != null && parsedBody.relatedParty && !equal( previousBody.relatedParty.sort(sortParty), parsedBody.relatedParty.sort(sortParty))) {
+                    if (
+                        parsedBody != null &&
+                        Object.prototype.hasOwnProperty.call(parsedBody, 'relatedParty') &&
+                        (!Array.isArray(parsedBody.relatedParty) ||
+                            !equal(previousBody.relatedParty.sort(sortParty), parsedBody.relatedParty.sort(sortParty)))
+                    ) {
                         return callback({
                             status: 409,
                             message: 'The field "relatedParty" can not be modified'

@@ -4344,6 +4344,28 @@ describe('Catalog API', function() {
         testUpdateProductSpec(productBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
     });
 
+    [null, false, 0, '', true, 1, 'invalid', {}, []].forEach(function(relatedParty) {
+        it('should reject a product PATCH with relatedParty set to ' + JSON.stringify(relatedParty), function(done) {
+            testUpdateProductSpec(
+                JSON.stringify({ relatedParty: relatedParty }),
+                { requestStatus: 200, offerings: [] },
+                409,
+                INVALID_RELATED_PARTY,
+                done
+            );
+        });
+    });
+
+    it('should allow a product PATCH that omits relatedParty', function(done) {
+        testUpdateProductSpec(
+            JSON.stringify({ description: 'Updated description' }),
+            { requestStatus: 200, offerings: [] },
+            null,
+            null,
+            done
+        );
+    });
+
     it('should allow to update a product if the body does not modify the original relatedParty', function(done) {
         var productBody = JSON.stringify({
             relatedParty: [previousProductBody.relatedParty[1], previousProductBody.relatedParty[0]]
@@ -5254,6 +5276,28 @@ describe('Catalog API', function() {
         };
 
         testUpdateCatalog(catalogBody, offeringsInfo, 409, INVALID_RELATED_PARTY, done);
+    });
+
+    [null, false, 0, '', true, 1, 'invalid', {}, []].forEach(function(relatedParty) {
+        it('should reject a catalog PATCH with relatedParty set to ' + JSON.stringify(relatedParty), function(done) {
+            testUpdateCatalog(
+                JSON.stringify({ relatedParty: relatedParty }),
+                { requestStatus: 200, offerings: [] },
+                409,
+                INVALID_RELATED_PARTY,
+                done
+            );
+        });
+    });
+
+    it('should allow a catalog PATCH that omits relatedParty', function(done) {
+        testUpdateCatalog(
+            JSON.stringify({ description: 'Updated description' }),
+            { requestStatus: 200, offerings: [] },
+            null,
+            null,
+            done
+        );
     });
 
     it('should allow to update a catalog if the body does not modifie the original relatedParty', function(done) {
