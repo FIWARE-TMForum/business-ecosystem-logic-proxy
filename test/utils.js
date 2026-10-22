@@ -204,13 +204,6 @@ var defaultConfig = {
 			host: 'search.com',
 			port: '8637',
 			appSsl: false
-		},
-		ai: {
-			path: 'ai',
-			apiPath: '/ai',
-			host: 'ai.com',
-			port: '8637',
-			appSsl: false
 		}
 	},
 	revenueModel: 30,

@@ -2491,7 +2491,6 @@ const catalog = (function() {
             const href = ids.length > 0 ? ids.join(',') : 'null'
             const limit = query.limit != null ? query.limit : (ids.length > 0 ? String(ids.length) : null)
             let newUrl = resourcePath + '?href=' + href
-            const shouldPreserveRelatedParty = resourcePath === '/catalog/productOffering' && query['relatedParty.id'] != null
 
             req.query = {
                 href: href
@@ -2500,11 +2499,6 @@ const catalog = (function() {
             if (limit != null) {
                 req.query.limit = String(limit)
                 newUrl += '&limit=' + req.query.limit
-            }
-
-            if (shouldPreserveRelatedParty) {
-                req.query['relatedParty.id'] = query['relatedParty.id']
-                newUrl += '&relatedParty.id=' + req.query['relatedParty.id']
             }
 
             req.apiUrl = newUrl
@@ -2537,6 +2531,9 @@ const catalog = (function() {
 
         const hasKeyword = query.keyword != null && String(query.keyword).trim().length > 0
         const hasCategoryFilters = query['category.id'] != null && String(query['category.id']).trim().length > 0
+        const organizationId = query['relatedParty.id'] != null && String(query['relatedParty.id']).trim().length > 0
+            ? String(query['relatedParty.id']).trim()
+            : null
 
         if (catalogsPattern.test(req.path) && config.searchUrl && hasKeyword) {
             // Query to the external search engine
@@ -2558,7 +2555,7 @@ const catalog = (function() {
                 page.sort = query.sort
             }
 
-            searchEngine.search(query.keyword, query['category.id'], page)
+            searchEngine.search(query.keyword, query['category.id'], page, organizationId)
                 .then(returnQueryRes)
                 .catch(() => {
                     callback({

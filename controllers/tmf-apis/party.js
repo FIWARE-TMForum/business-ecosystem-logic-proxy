@@ -62,6 +62,16 @@ const party = (function() {
         return lifecycleStatus != null && String(lifecycleStatus).toLowerCase() === LAUNCHED_STATE
     }
 
+    const getSearchKeyword = function(req) {
+        const keyword = getQueryParam(req, 'keyword')
+
+        if (keyword == null || String(keyword).trim().length === 0) {
+            return null
+        }
+
+        return keyword
+    }
+
     const removeLifecycleStatusQuery = function(req) {
         const parsedUrl = url.parse(req.apiUrl || '')
         const params = new URLSearchParams(parsedUrl.query || '')
@@ -200,9 +210,11 @@ const party = (function() {
     }
 
     const validateAllowed = function(req, callback) {
-        if (isOrganizationListRequest(req) && isLaunchedQuery(req)) {
+        const searchKeyword = getSearchKeyword(req)
+
+        if (isOrganizationListRequest(req) && (isLaunchedQuery(req) || searchKeyword != null)) {
             if (config.searchUrl) {
-                searchEngine.searchOrganizations({}, buildSearchPage(req), false)
+                searchEngine.searchOrganizations({}, buildSearchPage(req), false, searchKeyword)
                     .then((result) => {
                         rewriteOrganizationQueryFromSearch(req, result)
                         callback(null)
@@ -216,8 +228,10 @@ const party = (function() {
                 return
             }
 
-            req[launchedOrganizationOfferFilter] = true
-            removeLifecycleStatusQuery(req)
+            if (isLaunchedQuery(req)) {
+                req[launchedOrganizationOfferFilter] = true
+                removeLifecycleStatusQuery(req)
+            }
         }
 
         callback(null);
