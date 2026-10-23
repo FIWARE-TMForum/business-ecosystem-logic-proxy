@@ -317,6 +317,48 @@ describe('ServiceSpecification API', function() {
                 })
             }
 
+            const originalParties = [
+                { id: 'test', href: 'urn:organization:test', name: 'Seller', role: 'Seller', '@referredType': 'Organization' },
+                { id: 'operator', href: 'urn:organization:operator', name: 'Operator', role: 'SellerOperator', '@referredType': 'Organization' }
+            ];
+
+            const changedParties = ['id', 'href', 'name', 'role', '@referredType'].map(function(field) {
+                return [Object.assign({}, originalParties[0], { [field]: 'changed' }), originalParties[1]];
+            });
+
+            [null, false, 0, '', true, 1, 'invalid', {}, [], [null, null], [originalParties[0]],
+                originalParties.concat(originalParties[0]), [originalParties[0], originalParties[0]]
+            ].concat(changedParties).forEach(function(relatedParty) {
+                it('should reject changes to relatedParty: ' + JSON.stringify(relatedParty), function(done) {
+                    testUpdateService(seller, 'urn:service-spec:1', {
+                        id: 'urn:service-spec:1',
+                        lifecycleStatus: 'Active',
+                        relatedParty: originalParties
+                    }, { relatedParty: relatedParty }, true, {
+                        status: 409,
+                        message: 'The field "relatedParty" can not be modified'
+                    }, done);
+                });
+            });
+
+            [originalParties, originalParties.slice().reverse()].forEach(function(relatedParty, index) {
+                it('should allow unchanged relatedParty with array order ' + index, function(done) {
+                    testUpdateService(seller, 'urn:service-spec:1', {
+                        id: 'urn:service-spec:1',
+                        lifecycleStatus: 'Active',
+                        relatedParty: originalParties
+                    }, { relatedParty: relatedParty }, true, null, done);
+                });
+            });
+
+            it('should allow a PATCH that omits relatedParty', function(done) {
+                testUpdateService(seller, 'urn:service-spec:1', {
+                    id: 'urn:service-spec:1',
+                    lifecycleStatus: 'Active',
+                    relatedParty: originalParties
+                }, { description: 'Updated description' }, true, null, done);
+            });
+
             it('should allow to update a service specification', (done) => {
                 testUpdateService(seller, 'urn:service-spec:1', {
                     id: 'urn:service-spec:1',

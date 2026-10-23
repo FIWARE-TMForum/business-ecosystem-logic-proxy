@@ -22,6 +22,7 @@ const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 const axios = require('axios')
 const config = require('./../../config')
+const equal = require('deep-equal')
 
 const resource = (function (){
 
@@ -143,10 +144,24 @@ const resource = (function (){
     }
 
     const validateUpdate = function(req, callback) {
-        // Check the lifecycle updates
         const body = req.parsedBody
         const prevBody = req.prevBody
 
+        if (body != null && Object.prototype.hasOwnProperty.call(body, 'relatedParty')) {
+            const sortParty = (p1, p2) =>
+                String(p1?.id).localeCompare(String(p2?.id)) ||
+                String(p1?.role).localeCompare(String(p2?.role))
+
+            if (!Array.isArray(body.relatedParty) || !Array.isArray(prevBody.relatedParty) ||
+                !equal(prevBody.relatedParty.slice().sort(sortParty), body.relatedParty.slice().sort(sortParty))) {
+                return callback({
+                    status: 409,
+                    message: 'The field "relatedParty" can not be modified'
+                })
+            }
+        }
+
+        // Check the lifecycle updates
         if (body.lifecycleStatus != null && !tmfUtils.isValidStatusTransition(prevBody.lifecycleStatus, body.lifecycleStatus)) {
             // The status is being updated
             return callback({
