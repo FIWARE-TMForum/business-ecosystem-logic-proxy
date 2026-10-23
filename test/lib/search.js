@@ -122,6 +122,48 @@ describe('Search client', () => {
         )
     })
 
+    it('should include organizationId in product search request body when provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search('testkey', '', {}, 'urn:ngsi-ld:organization:provider').then((ids) => {
+            expect(ids).toEqual([])
+
+            expect(axios).toHaveBeenCalledWith('http://search.com/api/SearchProduct/testkey', {
+                categories: [],
+                organizationId: 'urn:ngsi-ld:organization:provider'
+            })
+            done()
+        })
+    })
+
+    it('should search products by organizationId without keyword when provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.search(null, '', {}, 'urn:ngsi-ld:organization:provider').then((ids) => {
+            expect(ids).toEqual([])
+
+            expect(axios).toHaveBeenCalledWith('http://search.com/api/SearchProduct', {
+                categories: [],
+                organizationId: 'urn:ngsi-ld:organization:provider'
+            })
+            done()
+        })
+    })
+
     it('should search if keyword and paging is provided', (done) => {
         let axios = jasmine.createSpy()
         axios.and.returnValue(Promise.resolve({
@@ -396,7 +438,30 @@ describe('Search client', () => {
         })
     })
 
-    it('should ignore organization keyword mode since searchOrganizations has no keyword parameter', (done) => {
+    it('should search organizations using a keyword path when provided', (done) => {
+        let axios = jasmine.createSpy()
+        axios.and.returnValue(Promise.resolve({
+            data: []
+        }))
+
+        const client = searchClient({
+            post: axios
+        })
+
+        client.searchOrganizations(null, {offset: 12, pageSize: 6}, false, 'testkey').then((ids) => {
+            expect(ids).toEqual([])
+
+            let url = 'http://search.com/api/searchOrganizations/testkey?page=2&size=6&considerAllOrgs=false'
+            expect(axios).toHaveBeenCalledWith(url, {
+                categories: [],
+                countries: [],
+                complianceLevels: []
+            })
+            done()
+        })
+    })
+
+    it('should send organization keyword as a query parameter when configured', (done) => {
         let axios = jasmine.createSpy()
         axios.and.returnValue(Promise.resolve({
             data: []
@@ -408,10 +473,10 @@ describe('Search client', () => {
 
         config.useQueryKeyword = true
 
-        client.searchOrganizations(null, {offset: 12, pageSize: 6}).then((ids) => {
+        client.searchOrganizations(null, {offset: 12, pageSize: 6}, true, 'testkey').then((ids) => {
             expect(ids).toEqual([])
 
-            let url = 'http://search.com/api/searchOrganizations?page=2&size=6&considerAllOrgs=false'
+            let url = 'http://search.com/api/searchOrganizations?query=testkey&page=2&size=6&considerAllOrgs=true'
             expect(axios).toHaveBeenCalledWith(url, {
                 categories: [],
                 countries: [],

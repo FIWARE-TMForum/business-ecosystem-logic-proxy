@@ -44,7 +44,6 @@ const FEATURE_FLAGS = [
     'quotesEnabled',
     'tenderingEnabled',
     'launchValidationEnabled',
-    'aiEnabled',
     'tenderDevButtonsOpenCloseEnabled'
 ]
 
