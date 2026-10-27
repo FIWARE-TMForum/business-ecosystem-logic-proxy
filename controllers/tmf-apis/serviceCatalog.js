@@ -23,8 +23,10 @@ const config = require('./../../config')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 const equal = require('deep-equal')
+const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
 
 const serviceCatalog = (function() {
+    const lifecycleFilter = createSpecificationLifecycleFilter('serviceSpecification');
 
     const validateRetrieving = function(req, callback) {
         // Check if the request is a list of service specifications
@@ -248,7 +250,7 @@ const serviceCatalog = (function() {
     }
 
     const validators = {
-        GET: [validateRetrieving],
+        GET: [validateRetrieving, lifecycleFilter.prepare],
         POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost, validateFields],
         PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller, validateFields],
         PUT: [utils.methodNotAllowed],
@@ -276,6 +278,7 @@ const serviceCatalog = (function() {
     return {
         checkPermissions: checkPermissions,
         executePostValidation: executePostValidation,
+        getFilteredPaginationConfig: lifecycleFilter.getFilteredPaginationConfig,
         handleAPIError: handleAPIError
     }
 })();
