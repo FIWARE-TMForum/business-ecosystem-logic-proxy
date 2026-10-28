@@ -33,7 +33,7 @@ describe('Specification lifecycle pagination through the TMF proxy', function() 
         .map((status, index) => ({ id: String(index), name: 'Spec ' + index, lifecycleStatus: status }));
     const pass = (req, callback) => callback(null);
 
-    const createProxy = function(definition) {
+    const createProxy = function(definition, upstreamItems = items) {
         const controller = proxyquire('../../controllers/tmf-apis/' + definition.module, {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
@@ -46,12 +46,12 @@ describe('Specification lifecycle pagination through the TMF proxy', function() 
         const axios = jasmine.createSpyObj('axios', ['request']);
         axios.request.and.callFake((options) => {
             const params = new URL(options.url).searchParams;
-            let page = items;
+            let page = upstreamItems;
             if (params.has('lifecycleStatus')) {
                 page = page.filter((item) => params.get('lifecycleStatus').split(',').indexOf(item.lifecycleStatus) >= 0);
             }
             const offset = Number(params.get('offset') || 0);
-            const limit = Number(params.get('limit') || items.length);
+            const limit = Number(params.get('limit') || upstreamItems.length);
             page = page.slice(offset, offset + limit);
             if (params.has('fields')) {
                 page = page.map((item) => {
@@ -118,9 +118,14 @@ describe('Specification lifecycle pagination through the TMF proxy', function() 
                     return proxy.request(Object.assign({}, query, { offset: '2' }), token);
                 }).then((last) => {
                     expect(last.body.map((item) => item.id)).toEqual(['5', '6']);
-                    expect(last.headers[filteredPagination.TOKEN_HEADER]).toBeUndefined();
+                    const token = last.headers[filteredPagination.TOKEN_HEADER];
+                    expect(filteredPagination.decodeToken(token).offset).toBe(7);
+                    return proxy.request(Object.assign({}, query, { offset: '4' }), token);
+                }).then((empty) => {
+                    expect(empty.body).toEqual([]);
+                    expect(empty.headers[filteredPagination.TOKEN_HEADER]).toBeUndefined();
                     expect(proxy.axios.request.calls.allArgs().map((args) => new URL(args[0].url).searchParams.get('offset')))
-                        .toEqual(['0', '2', '4', '6']);
+                        .toEqual(['0', '2', '4', '6', '7']);
                     proxy.axios.request.calls.allArgs().forEach((args) => {
                         const params = new URL(args[0].url).searchParams;
                         expect(params.has('lifecycleStatus')).toBe(false);
@@ -128,6 +133,28 @@ describe('Specification lifecycle pagination through the TMF proxy', function() 
                         expect(params.get('sort')).toBe('-lastUpdate');
                         expect(params.get('isBundle')).toBe('false');
                     });
+                    done();
+                }).catch(done.fail);
+            });
+
+            it('should issue a cursor for exactly six matches on the first page and then return an empty page', function(done) {
+                const upstreamItems = ['Active', 'Retired', 'Active', 'Obsolete', 'Active', 'Retired', 'Obsolete', 'Retired', 'Obsolete']
+                    .map((status, index) => ({ id: String(index), lifecycleStatus: status }));
+                const proxy = createProxy(definition, upstreamItems);
+                const firstQuery = Object.assign({}, query, { limit: '6' });
+
+                proxy.request(firstQuery).then((first) => {
+                    expect(first.status).toBe(200);
+                    expect(first.body.map((item) => item.id)).toEqual(['1', '3', '5', '6', '7', '8']);
+                    const token = first.headers[filteredPagination.TOKEN_HEADER];
+                    expect(filteredPagination.decodeToken(token).offset).toBe(9);
+                    return proxy.request(Object.assign({}, firstQuery, { offset: '6' }), token);
+                }).then((next) => {
+                    expect(next.status).toBe(200);
+                    expect(next.body).toEqual([]);
+                    expect(next.headers[filteredPagination.TOKEN_HEADER]).toBeUndefined();
+                    expect(proxy.axios.request.calls.allArgs().map((args) => new URL(args[0].url).searchParams.get('offset')))
+                        .toEqual(['0', '6', '9']);
                     done();
                 }).catch(done.fail);
             });
