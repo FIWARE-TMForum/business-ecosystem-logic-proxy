@@ -25,6 +25,7 @@ const tmfUtils = require('./../../lib/tmfUtils')
 const equal = require('deep-equal')
 const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
 
+
 const serviceCatalog = (function() {
     const lifecycleFilter = createSpecificationLifecycleFilter('serviceSpecification');
 

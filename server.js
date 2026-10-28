@@ -56,7 +56,6 @@ const FEATURE_FLAGS = [
     'quotesEnabled',
     'tenderingEnabled',
     'launchValidationEnabled',
-    'aiEnabled',
     'tenderDevButtonsOpenCloseEnabled'
 ]
 
@@ -506,12 +505,6 @@ app.get('/config', async (_, res) => {
     const searchConfig = await admin.loadSearchConfig()
 
     res.send({
-        ai: {
-            aiEnabled: featureFlags.aiEnabled,
-            aiApiKey: config.aiApiKey,
-            aiApiUrl: config.aiApiUrl,
-            aiSearchProfile: config.aiSearchProfile
-        },
         siop: {
             enabled: config.siop.enabled,
             isRedirection: config.siop.isRedirection,

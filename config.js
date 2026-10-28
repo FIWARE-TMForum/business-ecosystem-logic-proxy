@@ -302,13 +302,6 @@ config.endpoints = {
         apiPath: '',
         host: 'search-service-svc.billing.svc.cluster.local',
         port: '8080'
-    },
-    ai: {
-        path: 'ai',
-        apiPath: '',
-        host: 'dome.expertcustomers.ai',
-        port: '443',
-        appSsl: true
     }
 };
 
@@ -836,30 +829,6 @@ config.priceCompSchema = process.env.BAE_LP_PRICE_COMP_SCHEMA || config.priceCom
 config.offeringSchema = process.env.BAE_LP_OFFERING_SCHEMA || config.offeringSchema;
 
 
-
-// AI Search configuration
-config.aiEnabled = false;
-if (!!process.env.BAE_LP_AI_ENABLED) {
-    config.aiEnabled = process.env.BAE_LP_AI_ENABLED == 'true';
-}
-
-config.aiApiKey = '28791420a51be86495cab108f32221fa458469e29a04b33567b057c95878bd72'
-config.aiApiKey = process.env.BAE_LP_AI_API_KEY || config.aiApiKey;
-
-config.aiApiUrl = '/ai/rag/'
-config.aiApiUrl = process.env.BAE_LP_AI_API_PATH || config.aiApiUrl;
-
-config.aiSearchProfile = 'dome_prod'
-config.aiSearchProfile = process.env.BAE_LP_AI_SEARCH_PROFILE || config.aiSearchProfile;
-
-// Proxy redirect for AI service
-config.endpoints.ai.apiPath = process.env.BAE_LP_ENDPOINT_AI_PATH || config.endpoints.ai.apiPath;
-config.endpoints.ai.port = process.env.BAE_LP_ENDPOINT_AI_PORT || config.endpoints.ai.port;
-config.endpoints.ai.host = process.env.BAE_LP_ENDPOINT_AI_HOST || config.endpoints.ai.host;
-
-if (!!process.env.BAE_LP_ENDPOINT_AI_SECURED) {
-    config.endpoints.ai.appSsl = process.env.BAE_LP_ENDPOINT_AI_SECURED == 'true';
-}
 
 if (!!process.env.BAE_LP_TENDER_DEV_BUTTON_ENABLED) {
     config.tenderDevButtonsOpenCloseEnabled = process.env.BAE_LP_TENDER_DEV_BUTTON_ENABLED == 'true';

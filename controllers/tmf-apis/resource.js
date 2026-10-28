@@ -25,6 +25,7 @@ const config = require('./../../config')
 const equal = require('deep-equal')
 const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
 
+
 const resource = (function (){
     const lifecycleFilter = createSpecificationLifecycleFilter('resourceSpecification');
 
