@@ -444,12 +444,13 @@ describe('Catalog API', function() {
 
         catalogApi.checkPermissions(req, function(err) {
             expect(err).toBeNull();
-            expect(req.apiUrl).toBe('/catalog/productOffering?category=cat-1,cat-2');
+            expect(req.apiUrl).toBe('/catalog/productOffering?category.id=cat-1,cat-2');
+            expect(req.query).toEqual({ 'category.id': 'cat-1,cat-2' });
             done();
         });
     });
 
-    it('should intersect existing category filters when rewriting GET catalog productOffering requests', function(done) {
+    it('should combine and deduplicate selected and catalog categories using category.id', function(done) {
         const catalogApi = getCatalogApi({}, {}, catalogGetUtils);
 
         nock(SERVER)
@@ -461,21 +462,25 @@ describe('Catalog API', function() {
         const req = {
             method: 'GET',
             path: '/catalog/catalog/catalog-1/productOffering',
-            apiUrl: '/catalog/catalog/catalog-1/productOffering?category=cat-1,cat-3&sort=name',
+            apiUrl: '/catalog/catalog/catalog-1/productOffering?category.id=cat-1,cat-3&sort=name',
             query: {
-                category: 'cat-1,cat-3',
+                'category.id': 'cat-1,cat-3',
                 sort: 'name'
             }
         };
 
         catalogApi.checkPermissions(req, function(err) {
             expect(err).toBeNull();
-            expect(req.apiUrl).toBe('/catalog/productOffering?category=cat-1&sort=name');
+            expect(req.apiUrl).toBe('/catalog/productOffering?category.id=cat-1,cat-3,cat-2&sort=name');
+            expect(req.query).toEqual({
+                'category.id': 'cat-1,cat-3,cat-2',
+                sort: 'name'
+            });
             done();
         });
     });
 
-    it('should preserve external search rewrites when adding catalog category filters', function(done) {
+    it('should scope keyword searches by the catalog categories before rewriting to href', function(done) {
         const previousSearchUrl = config.searchUrl;
         config.searchUrl = 'http://search.com';
 
@@ -503,9 +508,58 @@ describe('Catalog API', function() {
         catalogApi.checkPermissions(req, function(err) {
             config.searchUrl = previousSearchUrl;
             expect(err).toBeNull();
-            expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {});
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=1&category=cat-1');
+            expect(searchMethod).toHaveBeenCalledWith('testkey', 'cat-1', {});
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=1');
             done();
+        });
+    });
+
+    [[{ id: 'offering-1' }, { id: 'offering-2' }], []].forEach(function(searchResults) {
+        it('should send both category names to search before pagination with ' + searchResults.length + ' results', function(done) {
+            const previousSearchUrl = config.searchUrl;
+            config.searchUrl = 'http://search.com';
+            const searchClient = proxyquire('../../../lib/search', {
+                '../config': config,
+                './utils': catalogGetUtils
+            }).searchEngine;
+            const catalogApi = getCatalogApi({}, {}, catalogGetUtils, {}, {}, {}, searchClient);
+
+            const catalogScope = nock(SERVER)
+                .get('/api/catalog/catalog-1')
+                .reply(200, { category: [{ id: 'provider-category' }] });
+            const categoryScope = nock(SERVER)
+                .get('/api/category/selected-category')
+                .reply(200, { name: 'Infrastructure (IaaS)' })
+                .get('/api/category/provider-category')
+                .reply(200, { name: 'Engineering D.HUB S.p.A' });
+            const searchScope = nock(config.searchUrl)
+                .post('/api/SearchProduct?page=1&size=6', {
+                    categories: ['Infrastructure (IaaS)', 'Engineering D.HUB S.p.A']
+                })
+                .reply(200, searchResults);
+            const req = {
+                method: 'GET',
+                path: '/catalog/catalog/catalog-1/productOffering',
+                apiUrl: '/catalog/catalog/catalog-1/productOffering?lifecycleStatus=Launched&category.id=selected-category&limit=6&offset=6',
+                query: {
+                    lifecycleStatus: 'Launched',
+                    'category.id': 'selected-category',
+                    limit: '6',
+                    offset: '6'
+                }
+            };
+
+            catalogApi.checkPermissions(req, function(err) {
+                config.searchUrl = previousSearchUrl;
+                expect(err).toBeNull();
+                expect(catalogScope.isDone()).toBe(true);
+                expect(categoryScope.isDone()).toBe(true);
+                expect(searchScope.isDone()).toBe(true);
+                const href = searchResults.length > 0 ? 'offering-1,offering-2' : 'null';
+                expect(req.apiUrl).toBe('/catalog/productOffering?href=' + href + '&limit=6');
+                expect(req.query).toEqual({ href: href, limit: '6' });
+                done();
+            });
         });
     });
 

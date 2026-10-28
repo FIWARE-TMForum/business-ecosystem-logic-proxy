@@ -210,45 +210,6 @@ const catalog = (function() {
         return apiUrl.substring(queryStart + 1)
     }
 
-    const addCategoryFilter = function(queryString, categoryIds) {
-        if (categoryIds.length === 0) {
-            return queryString
-        }
-
-        const categoryFilter = categoryIds.join(',')
-
-        if (!queryString) {
-            return 'category=' + categoryFilter
-        }
-
-        const queryParts = queryString.split('&').filter((part) => {
-            return part.length > 0
-        })
-        const remainingParts = []
-        let categoryPart = null
-
-        queryParts.forEach((part) => {
-            const keyValue = part.split('=')
-
-            if (keyValue[0] === 'category') {
-                categoryPart = part
-            } else {
-                remainingParts.push(part)
-            }
-        })
-
-        if (categoryPart == null) {
-            return queryString + '&category=' + categoryFilter
-        }
-
-        const requestedCategories = categoryPart.split('=')[1].split(',')
-        const categoryIntersection = requestedCategories.filter((categoryId) => {
-            return categoryIds.indexOf(categoryId) >= 0
-        })
-
-        return ['category=' + categoryIntersection.join(',')].concat(remainingParts).join('&')
-    }
-
     const rewriteCatalogOfferingQuery = function(req, callback) {
         const pathInfo = getCatalogOfferingPathInfo(req)
 
@@ -261,7 +222,24 @@ const catalog = (function() {
                 return callback(err)
             }
 
-            const queryString = addCategoryFilter(getQueryString(req.apiUrl), getCategoryIds(response.body))
+            const params = new URLSearchParams(getQueryString(req.apiUrl))
+            const query = req.query || {}
+            const requestedCategories = query['category.id'] != null
+                ? String(query['category.id'])
+                : params.getAll('category.id').join(',')
+            const categoryIds = Array.from(new Set(
+                requestedCategories.split(',').concat(getCategoryIds(response.body))
+                    .filter((id) => id != null)
+                    .map((id) => String(id).trim())
+                    .filter((id) => id.length > 0)
+            ))
+
+            if (categoryIds.length > 0) {
+                params.set('category.id', categoryIds.join(','))
+                req.query = Object.assign({}, query, { 'category.id': categoryIds.join(',') })
+            }
+
+            const queryString = params.toString().replace(/%2C/g, ',')
             req.apiUrl = '/catalog' + pathInfo.resourcePath + (queryString ? '?' + queryString : '')
             callback(null)
         })
@@ -2670,7 +2648,7 @@ const catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const validators = {
-        GET: [validateAllowed, processQuery, rewriteCatalogOfferingQuery, lifecycleFilter.prepare],
+        GET: [validateAllowed, rewriteCatalogOfferingQuery, processQuery, lifecycleFilter.prepare],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
         PUT: [utils.methodNotAllowed],
