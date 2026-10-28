@@ -98,15 +98,15 @@ const party = (function() {
         }).filter((id) => {
             return id != null
         })
-        const id = ids.length > 0 ? ids.join(',') : 'null'
+        const href = ids.length > 0 ? ids.join(',') : 'null'
         const limit = getQueryParam(req, 'limit') != null ? getQueryParam(req, 'limit') : (ids.length > 0 ? String(ids.length) : null)
         const fields = getQueryParam(req, 'fields')
         const query = {
-            id: id
+            href: href
         }
         const params = new URLSearchParams()
 
-        params.set('id', id)
+        params.set('href', href)
 
         if (limit != null) {
             query.limit = String(limit)
