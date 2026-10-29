@@ -259,9 +259,9 @@ describe('Catalog API', function() {
                 {},
                 null
             );
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2&limit=2');
+            expect(req.apiUrl).toBe('/catalog/productOffering?id=id-1,id-2&limit=2');
             expect(req.query).toEqual({
-                href: 'id-1,id-2',
+                id: 'id-1,id-2',
                 limit: '2'
             });
             done();
@@ -302,9 +302,9 @@ describe('Catalog API', function() {
                 },
                 null
             );
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=6');
+            expect(req.apiUrl).toBe('/catalog/productOffering?id=id-1&limit=6');
             expect(req.query).toEqual({
-                href: 'id-1',
+                id: 'id-1',
                 limit: '6'
             });
             done();
@@ -343,9 +343,9 @@ describe('Catalog API', function() {
                 },
                 'urn:ngsi-ld:organization:provider'
             );
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1,id-2&limit=100');
+            expect(req.apiUrl).toBe('/catalog/productOffering?id=id-1,id-2&limit=100');
             expect(req.query).toEqual({
-                href: 'id-1,id-2',
+                id: 'id-1,id-2',
                 limit: '100'
             });
             done();
@@ -405,7 +405,7 @@ describe('Catalog API', function() {
             config.searchUrl = previousSearchUrl;
             expect(err).toBeNull();
             expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {}, null);
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=1');
+            expect(req.apiUrl).toBe('/catalog/productOffering?id=id-1&limit=1');
             done();
         });
     });
@@ -442,12 +442,64 @@ describe('Catalog API', function() {
                     pageSize: '6'
                 }
             );
-            expect(req.apiUrl).toBe('/catalog/catalog?href=catalog-1,catalog-2&limit=6');
+            expect(req.apiUrl).toBe('/catalog/catalog?id=catalog-1,catalog-2&limit=6');
             expect(req.query).toEqual({
-                href: 'catalog-1,catalog-2',
+                id: 'catalog-1,catalog-2',
                 limit: '6'
             });
             expect(catalogApi.getFilteredPaginationConfig(req)).toBeNull();
+            done();
+        });
+    });
+
+    it('should use an ID filter for a single catalog search result', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchCatalogMethod = jasmine.createSpy('searchCatalog').and.returnValue(Promise.resolve([
+            { id: 'urn:ngsi-ld:catalog:catalog-1' }
+        ]));
+        const catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { searchCatalog: searchCatalogMethod });
+        const req = {
+            method: 'GET',
+            path: '/catalog/catalog',
+            apiUrl: '/catalog/catalog',
+            query: { keyword: 'testkey' }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(req.apiUrl).toBe('/catalog/catalog?id=urn:ngsi-ld:catalog:catalog-1&limit=1');
+            expect(req.query).toEqual({
+                id: 'urn:ngsi-ld:catalog:catalog-1',
+                limit: '1'
+            });
+            done();
+        });
+    });
+
+    it('should preserve paging and use href null for empty product offering searches', function(done) {
+        const previousSearchUrl = config.searchUrl;
+        config.searchUrl = 'http://search.com';
+
+        const searchMethod = jasmine.createSpy('search').and.returnValue(Promise.resolve([]));
+        const catalogApi = getCatalogApi({}, {}, {}, {}, {}, {}, { search: searchMethod });
+        const req = {
+            method: 'GET',
+            path: '/productOffering',
+            apiUrl: '/catalog/productOffering',
+            query: { keyword: 'testkey', offset: '24', limit: '12' }
+        };
+
+        catalogApi.checkPermissions(req, function(err) {
+            config.searchUrl = previousSearchUrl;
+            expect(err).toBeNull();
+            expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {
+                offset: '24', pageSize: '12'
+            }, null);
+            expect(req.apiUrl).toBe('/catalog/productOffering?href=null&limit=12');
+            expect(req.query).toEqual({ href: 'null', limit: '12' });
             done();
         });
     });
@@ -564,7 +616,7 @@ describe('Catalog API', function() {
             config.searchUrl = previousSearchUrl;
             expect(err).toBeNull();
             expect(searchMethod).toHaveBeenCalledWith('testkey', undefined, {}, null);
-            expect(req.apiUrl).toBe('/catalog/productOffering?href=id-1&limit=1&category=cat-1');
+            expect(req.apiUrl).toBe('/catalog/productOffering?id=id-1&limit=1&category=cat-1');
             done();
         });
     });
@@ -6714,84 +6766,87 @@ describe('Catalog API', function() {
         const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
         const defaultCatalogPath = '/api/catalog/' + config.defaultId;
 
-        it('should properly order the response when quering by ID', (done) => {
-            const req = {
-                method: 'GET',
-                apiUrl: '/productOffering?href=id1,id2,id3&limit=3&sttrs=id',
-                body: [{
-                    id: 'id3'
-                }, {
-                    id: 'id1'
-                }, {
-                    id: 'id2'
-                }]
-            }
-
-            testPostValidation(
-                req,
-                () => {
-                    expect(req.body).toEqual([{
+        ['id', 'href'].forEach((filterKey) => {
+            it('should preserve offering search order using ' + filterKey, (done) => {
+                const req = {
+                    method: 'GET',
+                    apiUrl: '/productOffering?' + filterKey + '=id1,id2,id3&limit=3&sttrs=id',
+                    body: [{
+                        id: 'id3'
+                    }, {
                         id: 'id1'
                     }, {
                         id: 'id2'
+                    }]
+                }
+
+                testPostValidation(
+                    req,
+                    () => {
+                        expect(req.body).toEqual([{
+                            id: 'id1'
+                        }, {
+                            id: 'id2'
+                        }, {
+                            id: 'id3'
+                        }])
+                    },
+                    done
+                );
+            });
+
+            it('should preserve catalog search order using ' + filterKey, (done) => {
+                const req = {
+                    method: 'GET',
+                    apiUrl: '/catalog/catalog?' + filterKey + '=catalog-1,catalog-2,catalog-3&limit=3&sttrs=id',
+                    body: [{
+                        id: 'catalog-3'
                     }, {
-                        id: 'id3'
-                    }])
-                },
-                done
-            );
-        });
-
-        it('should properly order catalog search responses when quering by ID', (done) => {
-            const req = {
-                method: 'GET',
-                apiUrl: '/catalog/catalog?href=catalog-1,catalog-2,catalog-3&limit=3&sttrs=id',
-                body: [{
-                    id: 'catalog-3'
-                }, {
-                    id: 'catalog-1'
-                }, {
-                    id: 'catalog-2'
-                }]
-            }
-
-            testPostValidation(
-                req,
-                () => {
-                    expect(req.body).toEqual([{
                         id: 'catalog-1'
                     }, {
                         id: 'catalog-2'
-                    }, {
+                    }]
+                }
+
+                testPostValidation(
+                    req,
+                    () => {
+                        expect(req.body).toEqual([{
+                            id: 'catalog-1'
+                        }, {
+                            id: 'catalog-2'
+                        }, {
+                            id: 'catalog-3'
+                        }])
+                    },
+                    done
+                );
+            });
+
+            it('should omit missing catalog matches when ordering using ' + filterKey, (done) => {
+                const req = {
+                    method: 'GET',
+                    apiUrl: '/catalog/catalog?' + filterKey + '=catalog-1,catalog-2,catalog-3&limit=3&sttrs=id',
+                    body: [{
                         id: 'catalog-3'
-                    }])
-                },
-                done
-            );
-        });
-
-        it('should omit missing catalog href matches when ordering responses by ID', (done) => {
-            const req = {
-                method: 'GET',
-                apiUrl: '/catalog/catalog?href=catalog-1,catalog-2,catalog-3&limit=3&sttrs=id',
-                body: [{
-                    id: 'catalog-3'
-                }, {
-                    id: 'catalog-1'
-                }]
-            }
-
-            testPostValidation(
-                req,
-                () => {
-                    expect(req.body).toEqual([{
+                    }, {
                         id: 'catalog-1'
-                    }, {
-                        id: 'catalog-3'
-                    }])
-                },
-                done
-            );
+                    }]
+                }
+
+                testPostValidation(
+                    req,
+                    () => {
+                        expect(req.body).toEqual([{
+                            id: 'catalog-1'
+                        }, {
+                            id: 'catalog-3'
+                        }])
+                    },
+                    done
+                );
+            });
+
         });
 
         it('should filter out ad-hoc offers when the user is not logged in', (done) => {
