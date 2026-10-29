@@ -108,15 +108,17 @@ const party = (function() {
         }).filter((id) => {
             return id != null
         })
-        const href = ids.length > 0 ? ids.join(',') : 'null'
+        // Use native ID filtering for matches; id=null is rejected by the API.
+        const filterKey = ids.length > 0 ? 'id' : 'href'
+        const filterValue = ids.length > 0 ? ids.join(',') : 'null'
         const limit = getQueryParam(req, 'limit') != null ? getQueryParam(req, 'limit') : (ids.length > 0 ? String(ids.length) : null)
         const fields = getQueryParam(req, 'fields')
         const query = {
-            href: href
+            [filterKey]: filterValue
         }
         const params = new URLSearchParams()
 
-        params.set('href', href)
+        params.set(filterKey, filterValue)
 
         if (limit != null) {
             query.limit = String(limit)

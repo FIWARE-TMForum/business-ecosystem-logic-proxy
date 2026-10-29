@@ -168,7 +168,7 @@ describe('Party API', function() {
                 });
             });
 
-            it('should use href filters for organization search results when search is enabled', function(done) {
+            it('should use ID filters for organization search results when search is enabled', function(done) {
                 const searchConfig = Object.assign({}, config, {
                     searchUrl: 'http://search.com'
                 });
@@ -198,9 +198,9 @@ describe('Party API', function() {
                         offset: '10',
                         pageSize: '2'
                     }, false, null);
-                    expect(req.apiUrl).toBe('/party/organization?href=org-1,org-2&limit=2&fields=tradingName');
+                    expect(req.apiUrl).toBe('/party/organization?id=org-1,org-2&limit=2&fields=tradingName');
                     expect(req.query).toEqual({
-                        href: 'org-1,org-2',
+                        id: 'org-1,org-2',
                         limit: '2',
                         fields: 'tradingName'
                     });
@@ -238,9 +238,9 @@ describe('Party API', function() {
                         offset: '10',
                         pageSize: '2'
                     }, false, 'acme');
-                    expect(req.apiUrl).toBe('/party/organization?href=org-1&limit=2&fields=tradingName');
+                    expect(req.apiUrl).toBe('/party/organization?id=org-1&limit=2&fields=tradingName');
                     expect(req.query).toEqual({
-                        href: 'org-1',
+                        id: 'org-1',
                         limit: '2',
                         fields: 'tradingName'
                     });
@@ -276,9 +276,9 @@ describe('Party API', function() {
                     expect(searchOrganizations).toHaveBeenCalledWith({}, {
                         pageSize: '2'
                     }, false, 'acme');
-                    expect(req.apiUrl).toBe('/party/organization?href=org-1&limit=2');
+                    expect(req.apiUrl).toBe('/party/organization?id=org-1&limit=2');
                     expect(req.query).toEqual({
-                        href: 'org-1',
+                        id: 'org-1',
                         limit: '2'
                     });
                     done();

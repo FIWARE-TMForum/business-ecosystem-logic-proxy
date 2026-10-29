@@ -2491,16 +2491,18 @@ const catalog = (function() {
     const processQuery = async (req, callback) => {
         const query = req.query || {}
 
-        const rewriteToHrefQuery = (resourcePath, result) => {
+        const rewriteSearchQuery = (resourcePath, result) => {
             const ids = result.map((hit) => {
                 return hit.id
             })
-            const href = ids.length > 0 ? ids.join(',') : 'null'
+            // Use native ID filtering for matches; id=null is rejected by the API.
+            const filterKey = ids.length > 0 ? 'id' : 'href'
+            const filterValue = ids.length > 0 ? ids.join(',') : 'null'
             const limit = query.limit != null ? query.limit : (ids.length > 0 ? String(ids.length) : null)
-            let newUrl = resourcePath + '?href=' + href
+            let newUrl = resourcePath + '?' + filterKey + '=' + filterValue
 
             req.query = {
-                href: href
+                [filterKey]: filterValue
             }
 
             if (limit != null) {
@@ -2515,11 +2517,11 @@ const catalog = (function() {
         }
 
         const returnQueryRes = (result) => {
-            rewriteToHrefQuery('/catalog/productOffering', result)
+            rewriteSearchQuery('/catalog/productOffering', result)
         }
 
         const returnCatalogQueryRes = (result) => {
-            rewriteToHrefQuery('/catalog/catalog', result)
+            rewriteSearchQuery('/catalog/catalog', result)
         }
 
         const buildSearchPage = () => {
@@ -2627,26 +2629,21 @@ const catalog = (function() {
         }
     }
 
-    const sortHrefResponse = (req, resourceName) => {
+    const sortSearchResponse = (req, resourceName) => {
         // Ensure that the response is in the same order as in the query string
-        if (req.apiUrl.indexOf('href=') < 0 || !Array.isArray(req.body)) {
+        if (!Array.isArray(req.body)) {
             return
         }
 
         try {
-            const query = req.apiUrl.split('?')[1]
-            const queryParts = query.split('&')
+            const query = url.parse(req.apiUrl, true).query
+            const filterValue = query.id || query.href
+            if (!filterValue) {
+                return
+            }
+            const refs = filterValue.split(',')
 
-            let refs = []
-
-            logger.debug(`Request ids in order: ${query}`);
-
-            queryParts.forEach((part) => {
-                const keyValue = part.split('=')
-                if (keyValue[0] === 'href') {
-                    refs = keyValue[1].split(',')
-                }
-            })
+            logger.debug(`Request ids in order: ${filterValue}`);
 
             let sortedBody = []
             refs.forEach((itemId) => {
@@ -2748,12 +2745,12 @@ const catalog = (function() {
         let body;
 
         if (req.method == 'GET' && req.apiUrl.indexOf('/productOffering') > -1) {
-            sortHrefResponse(req, 'offering')
+            sortSearchResponse(req, 'offering')
             filterAdhocOffers(req);
 
             return callback(null)
         } else if (req.method == 'GET' && catalogsPattern.test(req.apiUrl.split('?')[0])) {
-            sortHrefResponse(req, 'catalog')
+            sortSearchResponse(req, 'catalog')
 
             return callback(null)
         } else if (req.method == 'POST' && categoriesPattern.test(req.apiUrl)) {
