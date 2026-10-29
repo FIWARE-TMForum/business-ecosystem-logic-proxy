@@ -23,8 +23,11 @@ const tmfUtils = require('./../../lib/tmfUtils')
 const axios = require('axios')
 const config = require('./../../config')
 const equal = require('deep-equal')
+const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
+
 
 const resource = (function (){
+    const lifecycleFilter = createSpecificationLifecycleFilter('resourceSpecification');
 
     const validateRetrieving = function(req, callback) {
         // Check if the request is a list of resources specifications
@@ -244,7 +247,7 @@ const resource = (function (){
     };
 
     const validators = {
-        GET: [validateRetrieving],
+        GET: [validateRetrieving, lifecycleFilter.prepare],
         POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost, validateFields],
         PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller, validateFields],
         PUT: [utils.methodNotAllowed],
@@ -266,7 +269,8 @@ const resource = (function (){
     };
     return {
         checkPermissions: checkPermissions,
-        executePostValidation: executePostValidation
+        executePostValidation: executePostValidation,
+        getFilteredPaginationConfig: lifecycleFilter.getFilteredPaginationConfig
     };
 })()
 

@@ -36,6 +36,7 @@ const url = require('url')
 const utils = require('./../../lib/utils')
 const { parse } = require('path')
 const searchEngine = require('../../lib/search').searchEngine
+const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
 
 var LIFE_CYCLE = 'lifecycleStatus';
 
@@ -49,6 +50,7 @@ const CONSTRAINT_PRICE_TYPE = 'constraint';
 
 // Validator to check user permissions for accessing TMForum resources
 const catalog = (function() {
+    const lifecycleFilter = createSpecificationLifecycleFilter('productSpecification');
     //////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////// COMMON ///////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -2665,7 +2667,7 @@ const catalog = (function() {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     const validators = {
-        GET: [validateAllowed, processQuery, rewriteCatalogOfferingQuery],
+        GET: [validateAllowed, processQuery, rewriteCatalogOfferingQuery, lifecycleFilter.prepare],
         POST: [utils.validateLoggedIn, validateCreation],
         PATCH: [utils.validateLoggedIn, validateUpdate],
         PUT: [utils.methodNotAllowed],
@@ -2683,6 +2685,11 @@ const catalog = (function() {
     };
 
     const getFilteredPaginationConfig = function(req) {
+        const specificationPagination = lifecycleFilter.getFilteredPaginationConfig(req)
+        if (specificationPagination) {
+            return specificationPagination
+        }
+
         const isGet = req.method === 'GET'
         const isCatalogList = isCatalogListRequest(req)
         const isLaunchedQuery = isLaunchedCatalogQuery(req)

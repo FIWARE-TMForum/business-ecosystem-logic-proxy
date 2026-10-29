@@ -446,7 +446,9 @@ function tmf() {
 		}).then((page) => {
 			const result = Object.assign({}, lastResult)
 
-			result.body = page.body
+			result.body = paginationConfig.transformItem
+				? page.body.map(paginationConfig.transformItem)
+				: page.body
 			result.apiUrl = req.apiUrl
 			result.query = req.query
 

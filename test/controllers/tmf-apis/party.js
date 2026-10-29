@@ -168,7 +168,7 @@ describe('Party API', function() {
                 });
             });
 
-            it('should use organization search instead of filtered pagination when search is enabled', function(done) {
+            it('should use href filters for organization search results when search is enabled', function(done) {
                 const searchConfig = Object.assign({}, config, {
                     searchUrl: 'http://search.com'
                 });
@@ -198,9 +198,9 @@ describe('Party API', function() {
                         offset: '10',
                         pageSize: '2'
                     }, false, null);
-                    expect(req.apiUrl).toBe('/party/organization?id=org-1,org-2&limit=2&fields=tradingName');
+                    expect(req.apiUrl).toBe('/party/organization?href=org-1,org-2&limit=2&fields=tradingName');
                     expect(req.query).toEqual({
-                        id: 'org-1,org-2',
+                        href: 'org-1,org-2',
                         limit: '2',
                         fields: 'tradingName'
                     });
@@ -238,9 +238,9 @@ describe('Party API', function() {
                         offset: '10',
                         pageSize: '2'
                     }, false, 'acme');
-                    expect(req.apiUrl).toBe('/party/organization?id=org-1&limit=2&fields=tradingName');
+                    expect(req.apiUrl).toBe('/party/organization?href=org-1&limit=2&fields=tradingName');
                     expect(req.query).toEqual({
-                        id: 'org-1',
+                        href: 'org-1',
                         limit: '2',
                         fields: 'tradingName'
                     });
@@ -276,16 +276,16 @@ describe('Party API', function() {
                     expect(searchOrganizations).toHaveBeenCalledWith({}, {
                         pageSize: '2'
                     }, false, 'acme');
-                    expect(req.apiUrl).toBe('/party/organization?id=org-1&limit=2');
+                    expect(req.apiUrl).toBe('/party/organization?href=org-1&limit=2');
                     expect(req.query).toEqual({
-                        id: 'org-1',
+                        href: 'org-1',
                         limit: '2'
                     });
                     done();
                 });
             });
 
-            it('should rewrite launched organization list to empty id query when search has no results', function(done) {
+            it('should use an empty href query when the requested organization page has no results', function(done) {
                 const searchConfig = Object.assign({}, config, {
                     searchUrl: 'http://search.com'
                 });
@@ -297,19 +297,24 @@ describe('Party API', function() {
                 });
                 var req = {
                     method: 'GET',
-                    apiUrl: '/party/organization?lifecycleStatus=Launched&limit=2',
+                    apiUrl: '/party/organization?offset=24&limit=12&lifecycleStatus=Launched',
                     query: {
-                        lifecycleStatus: 'Launched',
-                        limit: '2'
+                        offset: '24',
+                        limit: '12',
+                        lifecycleStatus: 'Launched'
                     }
                 };
 
                 partyLib.checkPermissions(req, function(err) {
                     expect(err).toBe(null);
-                    expect(req.apiUrl).toBe('/party/organization?id=null&limit=2');
+                    expect(searchOrganizations).toHaveBeenCalledWith({}, {
+                        offset: '24',
+                        pageSize: '12'
+                    }, false, null);
+                    expect(req.apiUrl).toBe('/party/organization?href=null&limit=12');
                     expect(req.query).toEqual({
-                        id: 'null',
-                        limit: '2'
+                        href: 'null',
+                        limit: '12'
                     });
                     expect(partyLib.getFilteredPaginationConfig(req)).toBeNull();
                     done();

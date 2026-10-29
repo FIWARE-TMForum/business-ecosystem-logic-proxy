@@ -144,7 +144,51 @@ describe('Filtered pagination helper', function() {
         expect(filteredPagination.getTokenFromHeaders(headers)).toBe(token)
     })
 
-    it('should return no token when upstream is exhausted', function(done) {
+    it('should return a cursor for a full first page even when upstream is exhausted', function(done) {
+        const items = Array.from({ length: 9 }, (_, index) => ({
+            id: String(index),
+            valid: index % 2 === 1 || index >= 6
+        }))
+        const fetchPage = jasmine.createSpy('fetchPage').and.callFake((offset, limit) => {
+            return Promise.resolve(items.slice(offset, offset + limit))
+        })
+        const options = {
+            limit: 6,
+            offset: 0,
+            fingerprint: 'six-matches',
+            fetchPage: fetchPage,
+            predicate: (item) => item.valid
+        }
+
+        filteredPagination.paginate(options).then((first) => {
+            expect(first.body.map((item) => item.id)).toEqual(['1', '3', '5', '6', '7', '8'])
+            expect(filteredPagination.decodeToken(first.token)).toEqual({
+                offset: 9,
+                fingerprint: 'six-matches'
+            })
+            return filteredPagination.paginate(Object.assign({}, options, { offset: 6, token: first.token }))
+        }).then((next) => {
+            expect(next.body).toEqual([])
+            expect(next.token).toBeNull()
+            expect(fetchPage.calls.allArgs()).toEqual([[0, 6], [6, 6], [9, 6]])
+            done()
+        }).catch(done.fail)
+    })
+
+    it('should return no token for a short page when upstream is exhausted', function(done) {
+        filteredPagination.paginate({
+            limit: 2,
+            offset: 0,
+            fetchPage: () => Promise.resolve([{ id: '1' }]),
+            predicate: () => true
+        }).then((page) => {
+            expect(page.body).toEqual([{ id: '1' }])
+            expect(page.token).toBeNull()
+            done()
+        }).catch(done.fail)
+    })
+
+    it('should return no token for an empty page when upstream is exhausted', function(done) {
         const fetchPage = jasmine.createSpy('fetchPage').and.returnValue(Promise.resolve([
             { id: '1', valid: false }
         ]))
