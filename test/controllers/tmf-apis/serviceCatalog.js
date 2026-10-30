@@ -32,7 +32,10 @@ describe('ServiceSpecification API', function() {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/utils': utils
+            './../../lib/utils': utils,
+            './../../lib/store': {
+                storeClient: { validateService: (action, service, user, callback) => callback(null) }
+            }
         }).serviceCatalog;
     };
 
@@ -185,8 +188,8 @@ describe('ServiceSpecification API', function() {
                         expect(err.status).toBe(expectedStatus);
                         expect(err.message).toBe(expectedErr);
                     }
+                    done();
                 });
-                done();
             }
 
             it('should create a service specification successfully', (done) => {

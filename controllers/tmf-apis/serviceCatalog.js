@@ -23,6 +23,7 @@ const config = require('./../../config')
 const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 const equal = require('deep-equal')
+const storeClient = require('./../../lib/store').storeClient
 const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
 
 
@@ -250,10 +251,21 @@ const serviceCatalog = (function() {
         }
     }
 
+    const validateService = function(req, callback) {
+        const isUpdate = req.method === 'PATCH'
+        // PATCH replaces supplied collections and preserves omitted fields.
+        // Keep the stored id even when the caller supplies a different one.
+        const service = isUpdate
+            ? Object.assign({}, req.prevBody, req.parsedBody, { id: req.prevBody.id })
+            : req.parsedBody
+
+        storeClient.validateService(isUpdate ? 'update' : 'create', service, req.user, callback)
+    }
+
     const validators = {
         GET: [validateRetrieving, lifecycleFilter.prepare],
-        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost, validateFields],
-        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller, validateFields],
+        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost, validateFields, validateService],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller, validateFields, validateService],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };
