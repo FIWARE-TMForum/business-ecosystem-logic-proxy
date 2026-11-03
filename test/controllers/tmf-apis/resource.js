@@ -37,7 +37,10 @@ describe('ResourceSpecification API', function() {
             './../../config': config,
             './../../lib/logger': testUtils.emptyLogger,
             './../../lib/tmfUtils': tmfUtils,
-            './../../lib/utils': utils
+            './../../lib/utils': utils,
+            './../../lib/store': {
+                storeClient: { validateResource: (action, resource, user, callback) => callback(null) }
+            }
         }).resource;
     };
 
@@ -193,8 +196,8 @@ describe('ResourceSpecification API', function() {
                         expect(err.status).toBe(expectedStatus);
                         expect(err.message).toBe(expectedErr);
                     }
+                    done();
                 });
-                done();
             }
 
             it('should create a resource specification successfully', (done) => {

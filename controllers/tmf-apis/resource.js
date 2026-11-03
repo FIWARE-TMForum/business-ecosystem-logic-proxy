@@ -23,6 +23,7 @@ const tmfUtils = require('./../../lib/tmfUtils')
 const axios = require('axios')
 const config = require('./../../config')
 const equal = require('deep-equal')
+const storeClient = require('./../../lib/store').storeClient
 const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
 
 
@@ -246,10 +247,21 @@ const resource = (function (){
         }
     };
 
+    const validateResource = function(req, callback) {
+        const isUpdate = req.method === 'PATCH'
+        // PATCH replaces supplied collections and preserves omitted fields.
+        // Keep the stored id even when the caller supplies a different one.
+        const resource = isUpdate
+            ? Object.assign({}, req.prevBody, req.parsedBody, { id: req.prevBody.id })
+            : req.parsedBody
+
+        storeClient.validateResource(isUpdate ? 'update' : 'create', resource, req.user, callback)
+    }
+
     const validators = {
         GET: [validateRetrieving, lifecycleFilter.prepare],
-        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost, validateFields],
-        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller, validateFields],
+        POST: [utils.validateLoggedIn, parseBody, validateOwnerSellerPost, validateFields, validateResource],
+        PATCH: [utils.validateLoggedIn, parseBody, getPrevVersion, validateUpdate, validateOwnerSeller, validateFields, validateResource],
         PUT: [utils.methodNotAllowed],
         DELETE: [utils.methodNotAllowed]
     };
