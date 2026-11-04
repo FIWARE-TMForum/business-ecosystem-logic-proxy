@@ -24,6 +24,7 @@ const axios = require('axios')
 const config = require('./../../config')
 const equal = require('deep-equal')
 const storeClient = require('./../../lib/store').storeClient
+const logger = require('./../../lib/logger').logger.getLogger('resource')
 const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
 
 
@@ -276,8 +277,23 @@ const resource = (function (){
         async.series(reqValidators, callback);
     };
 
-    var executePostValidation = function(response, callback) {
-        callback(null)
+    const executePostValidation = function(response, callback) {
+        const path = (response.apiUrl || '').split('?')[0];
+        const collection = path.endsWith('/resourceSpecification');
+        const item = /\/resourceSpecification\/[^/]+$/.test(path);
+        const action = response.method === 'POST' && collection ? 'post-create'
+            : response.method === 'PATCH' && item ? 'post-update' : null;
+
+        if (!action || response.status < 200 || response.status >= 300 || response.status == null) {
+            return callback(null);
+        }
+
+        storeClient.validateResource(action, response.body, response.user, (err) => {
+            if (err) {
+                logger.warn(`The TMForum resource specification ${response.body && response.body.id} write succeeded, but charging backend ${action} failed: ${err.message}`);
+            }
+            callback(null);
+        });
     };
     return {
         checkPermissions: checkPermissions,

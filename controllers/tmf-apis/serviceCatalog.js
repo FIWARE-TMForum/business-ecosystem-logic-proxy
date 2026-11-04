@@ -24,6 +24,7 @@ const utils = require('./../../lib/utils')
 const tmfUtils = require('./../../lib/tmfUtils')
 const equal = require('deep-equal')
 const storeClient = require('./../../lib/store').storeClient
+const logger = require('./../../lib/logger').logger.getLogger('serviceCatalog')
 const { createSpecificationLifecycleFilter } = require('./../../lib/specificationLifecycleFilter')
 
 
@@ -281,7 +282,22 @@ const serviceCatalog = (function() {
     };
 
     const executePostValidation = function(response, callback) {
-        callback(null);
+        const path = (response.apiUrl || '').split('?')[0];
+        const collection = path.endsWith('/serviceSpecification');
+        const item = /\/serviceSpecification\/[^/]+$/.test(path);
+        const action = response.method === 'POST' && collection ? 'post-create'
+            : response.method === 'PATCH' && item ? 'post-update' : null;
+
+        if (!action || response.status < 200 || response.status >= 300 || response.status == null) {
+            return callback(null);
+        }
+
+        storeClient.validateService(action, response.body, response.user, (err) => {
+            if (err) {
+                logger.warn(`The TMForum service specification ${response.body && response.body.id} write succeeded, but charging backend ${action} failed: ${err.message}`);
+            }
+            callback(null);
+        });
     };
 
     const handleAPIError = function(res, callback) {

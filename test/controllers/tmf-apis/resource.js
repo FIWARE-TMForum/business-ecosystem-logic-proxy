@@ -515,3 +515,321 @@ describe('ResourceSpecification API', function() {
     })
 
 })
+
+describe('Resource specification charging validation', function() {
+    const config = testUtils.getDefaultConfig();
+    const utils = proxyquire('../../../lib/utils', { './../config': config });
+    const storeClient = proxyquire('../../../lib/store', {
+        './../config': config,
+        './utils': utils
+    }).storeClient;
+    const backend = utils.getAPIURL(config.endpoints.charging.appSsl,
+        config.endpoints.charging.host, config.endpoints.charging.port, '');
+    const catalog = utils.getAPIURL(config.endpoints.resource.appSsl,
+        config.endpoints.resource.host, config.endpoints.resource.port, '');
+    const validationPath = config.endpoints.charging.apiPath + '/charging/api/assetManagement/assets/validateResourceJob';
+    const user = {
+        id: 'provider', partyId: 'provider-party', userId: 'operator', userPartyId: 'operator-party',
+        accessToken: 'provider-token', email: 'provider@example.org', displayName: 'Provider',
+        roles: [{ name: config.roles.seller }]
+    };
+    const previous = {
+        id: 'resource-1', name: 'Resource', description: 'Original', lifecycleStatus: 'Active',
+        relatedParty: [{ id: user.partyId, role: config.roles.seller }],
+        specCharacteristic: [{ name: 'Resource Type', valueType: 'string', specCharacteristicValue: [{ value: 'plugin' }] }]
+    };
+    let api;
+    let loggedIn;
+    let owner;
+
+    beforeEach(function() {
+        nock.cleanAll();
+        loggedIn = true;
+        owner = true;
+        api = proxyquire('../../../controllers/tmf-apis/resource', {
+            './../../config': config,
+            './../../lib/store': { storeClient: storeClient },
+            './../../lib/utils': {
+                validateLoggedIn: (req, cb) => cb(loggedIn ? null : { status: 401 }),
+                hasRole: () => true
+            },
+            './../../lib/tmfUtils': {
+                hasPartyRole: () => owner,
+                validateNameField: () => null,
+                validateDescriptionField: () => null
+            }
+        }).resource;
+    });
+
+    afterEach(function() { nock.cleanAll(); });
+
+    function request(method, body) {
+        if (method === 'PATCH') {
+            nock(catalog).get('/api/resourceSpecification/resource-1').reply(200, previous);
+        }
+        return {
+            method: method, user: user, body: JSON.stringify(body),
+            apiUrl: '/resource/resourceSpecification' + (method === 'PATCH' ? '/resource-1' : ''),
+            headers: {}
+        };
+    }
+
+    function validation(action, resource) {
+        return nock(backend, { reqheaders: {
+            'content-type': 'application/json', authorization: 'Bearer provider-token',
+            'x-actor-id': user.id, 'x-party-id': user.partyId,
+            'x-user-id': user.userId, 'x-user-party-id': user.userPartyId,
+            'x-roles': config.roles.seller.toLowerCase() + ','
+        } }).post(validationPath, { action: action, resource: resource });
+    }
+
+    [undefined, previous.specCharacteristic].forEach(function(characteristics) {
+        it('validates creation with ' + (characteristics ? 'a Resource Type' : 'no Resource Type'), function(done) {
+            const body = { name: 'New resource', relatedParty: previous.relatedParty };
+            if (characteristics) body.specCharacteristic = characteristics;
+            const req = request('POST', body);
+            const scope = validation('create', body).reply(200);
+            api.checkPermissions(req, function(err) {
+                expect(err).toBe(null);
+                expect(scope.isDone()).toBe(true);
+                expect(req.body).toBe(JSON.stringify(body));
+                done();
+            });
+        });
+    });
+
+    [undefined, [], [{ name: 'New characteristic' }]].forEach(function(characteristics) {
+        it('validates complete PATCH with characteristics ' + JSON.stringify(characteristics), function(done) {
+            const patch = { description: 'Updated', id: 'caller-id' };
+            if (characteristics) patch.specCharacteristic = characteristics;
+            const proposed = Object.assign({}, previous, patch, { id: previous.id });
+            const req = request('PATCH', patch);
+            const scope = validation('update', proposed).reply(200);
+            api.checkPermissions(req, function(err) {
+                expect(err).toBe(null);
+                expect(scope.isDone()).toBe(true);
+                expect(req.body).toBe(JSON.stringify(patch));
+                expect(req.prevBody).toEqual(previous);
+                done();
+            });
+        });
+    });
+
+    ['POST', 'PATCH'].forEach(function(method) {
+        [400, 403, 409, 422, 500, 201, 202, 204, 'network'].forEach(function(status) {
+            it('blocks ' + method + ' on backend result ' + status, function(done) {
+                const body = method === 'POST' ? previous : { description: 'Updated' };
+                const proposed = Object.assign({}, previous, body);
+                const scope = validation(method === 'POST' ? 'create' : 'update', proposed);
+                if (status === 'network') scope.replyWithError('connection reset');
+                else scope.reply(status, { error: 'Plugin rejected resource' });
+                api.checkPermissions(request(method, body), function(err) {
+                    const expectedStatus = status === 'network' ? 504 : status < 300 ? 502 : status;
+                    expect(err.status).toBe(expectedStatus);
+                    expect(err.message).toBe([400, 403, 409, 422].indexOf(status) >= 0
+                        ? 'Plugin rejected resource' : 'The server has failed validating the resource specification');
+                    done();
+                });
+            });
+        });
+
+        it('skips backend validation for unauthenticated ' + method, function(done) {
+            loggedIn = false;
+            const scope = validation(method === 'POST' ? 'create' : 'update', previous).reply(200);
+            api.checkPermissions(request(method, previous), function(err) {
+                expect(err.status).toBe(401);
+                expect(scope.isDone()).toBe(false);
+                done();
+            });
+        });
+
+        it('skips backend validation for non-owner ' + method, function(done) {
+            owner = false;
+            const scope = validation(method === 'POST' ? 'create' : 'update', previous).reply(200);
+            api.checkPermissions(request(method, previous), function(err) {
+                expect(err.status).toBe(403);
+                expect(scope.isDone()).toBe(false);
+                done();
+            });
+        });
+    });
+
+    it('waits for backend validation before allowing forwarding', function(done) {
+        const scope = validation('create', previous).delay(30).reply(200);
+        let completed = false;
+        api.checkPermissions(request('POST', previous), function(err) {
+            completed = true;
+            expect(err).toBe(null);
+            expect(scope.isDone()).toBe(true);
+            done();
+        });
+        expect(completed).toBe(false);
+    });
+});
+
+describe('Resource specification callback flow', function() {
+    const kind = 'resource';
+    const config = testUtils.getDefaultConfig();
+    const utils = proxyquire('../../../lib/utils', { './../config.js': config });
+    const storeClient = proxyquire('../../../lib/store', {
+        './../config': config, './utils': utils
+    }).storeClient;
+    const endpoint = config.endpoints[kind];
+    const catalog = utils.getAPIURL(endpoint.appSsl, endpoint.host, endpoint.port, '');
+    const charging = config.endpoints.charging;
+    const backend = utils.getAPIURL(charging.appSsl, charging.host, charging.port, '');
+    const jobPath = charging.apiPath + '/charging/api/assetManagement/assets/validate' +
+        kind[0].toUpperCase() + kind.slice(1) + 'Job';
+    const collection = '/' + kind + 'Specification';
+    const user = {
+        id: 'provider', partyId: 'party', userId: 'operator', accessToken: 'token',
+        email: 'provider@example.org', displayName: 'Provider', roles: [{ name: config.roles.seller }]
+    };
+    const existing = {
+        id: 'spec-1', name: 'Specification', description: 'Original', lifecycleStatus: 'Active',
+        relatedParty: [{ id: user.partyId, role: config.roles.seller }],
+        specCharacteristic: [{ name: kind === 'service' ? 'Service Type' : 'Resource Type',
+            specCharacteristicValue: [{ value: 'plugin' }] }]
+    };
+    let tmf;
+    let api;
+    let postLogger;
+
+    beforeEach(function() {
+        nock.cleanAll();
+        postLogger = jasmine.createSpyObj('postLogger', ['warn']);
+        const file = kind === 'service' ? 'serviceCatalog' : 'resource';
+        api = proxyquire('../../../controllers/tmf-apis/' + file, {
+            './../../config': config,
+            './../../lib/logger': { logger: { getLogger: () => postLogger } },
+            './../../lib/store': { storeClient: storeClient },
+            './../../lib/utils': {
+                validateLoggedIn: (req, cb) => cb(null), hasRole: () => true
+            },
+            './../../lib/tmfUtils': {
+                hasPartyRole: () => true, validateNameField: () => null, validateDescriptionField: () => null
+            }
+        })[file];
+        const stubs = {
+            './../config': config, './../lib/utils': utils, './../lib/logger': testUtils.emptyLogger,
+            './../lib/tmfUtils': { attachRelatedParty: () => Promise.resolve() }
+        };
+        stubs['./tmf-apis/' + file] = { [file]: api };
+        tmf = proxyquire('../../../controllers/tmf', stubs).tmf();
+    });
+    afterEach(function() { nock.cleanAll(); });
+
+    function hook(action, specification) {
+        return nock(backend, { reqheaders: {
+            authorization: 'Bearer token', 'x-party-id': user.partyId,
+            'x-actor-id': user.id, 'content-type': 'application/json'
+        } }).post(jobPath, { action: action, [kind]: specification });
+    }
+
+    function run(method, options, done) {
+        const isUpdate = method === 'PATCH';
+        const path = collection + (isUpdate ? '/' + existing.id : '');
+        const proposed = isUpdate ? { description: 'Updated' } : Object.assign({}, existing);
+        if (!isUpdate) delete proposed.id;
+        const completeProposed = isUpdate ? Object.assign({}, existing, proposed) : proposed;
+        const saved = Object.assign({}, existing, proposed, { href: '/saved/spec-1', version: '2.0' });
+        const order = [];
+        if (isUpdate) nock(catalog).get(endpoint.apiPath + path).reply(200, existing);
+        const pre = hook(isUpdate ? 'update' : 'create', completeProposed)
+            .reply(options.preFailure ? 422 : 200, () => {
+                order.push('pre'); return { error: 'Pre-validation rejected' };
+            });
+        const catalogStatus = options.writeFailure ? 409 : isUpdate ? 200 : 201;
+        const write = nock(catalog)[isUpdate ? 'patch' : 'post'](endpoint.apiPath + path, proposed)
+            .reply(catalogStatus, () => {
+                order.push('write'); return options.writeFailure ? { error: 'Catalog rejected' } : saved;
+            }, { 'content-type': 'application/json', 'x-catalog-response': 'preserved' });
+        const postAction = isUpdate ? 'post-update' : 'post-create';
+        let post = hook(postAction, saved);
+        if (options.networkFailure) post = post.replyWithError('connection reset');
+        else post = post.reply(options.postFailure ? (options.postStatus || 422) : 200, () => {
+            order.push('post'); return { error: 'Post-action rejected' };
+        });
+        const req = {
+            method: method, user: user, apiUrl: '/' + endpoint.path + path,
+            url: '/' + endpoint.path + path, body: JSON.stringify(proposed),
+            headers: {}, connection: { remoteAddress: '127.0.0.1' }, get: () => undefined
+        };
+        const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader', 'end']);
+        res.status.and.returnValue(res);
+        res.json.and.callFake((body) => {
+            expect(pre.isDone()).toBe(true);
+            if (options.preFailure) {
+                expect(res.status).toHaveBeenCalledWith(422);
+                expect(body.error).toBe('Pre-validation rejected');
+                expect(write.isDone()).toBe(false);
+                expect(post.isDone()).toBe(false);
+                expect(order).toEqual(['pre']);
+            } else if (options.writeFailure) {
+                expect(res.status).toHaveBeenCalledWith(409);
+                expect(body).toEqual({ error: 'Catalog rejected' });
+                expect(post.isDone()).toBe(false);
+                expect(order).toEqual(['pre', 'write']);
+            } else if (options.postFailure || options.networkFailure) {
+                expect(res.status).toHaveBeenCalledWith(catalogStatus);
+                expect(post.isDone()).toBe(true);
+                expect(body).toEqual(saved);
+                expect(res.setHeader).toHaveBeenCalledWith('x-catalog-response', 'preserved');
+                expect(postLogger.warn.calls.allArgs().some((args) =>
+                    args[0].includes(existing.id) && args[0].includes(postAction + ' failed')
+                )).toBe(true);
+            } else {
+                expect(post.isDone()).toBe(true);
+                expect(order).toEqual(['pre', 'write', 'post']);
+                expect(res.status).toHaveBeenCalledWith(catalogStatus);
+                expect(body).toEqual(saved);
+                expect(res.setHeader).toHaveBeenCalledWith('x-catalog-response', 'preserved');
+            }
+            done();
+        });
+        tmf.checkPermissions(req, res);
+    }
+
+    ['POST', 'PATCH'].forEach((method) => {
+        it('runs ' + method + ' pre/write/post in order with complete saved payload', (done) => run(method, {}, done));
+        it('blocks ' + method + ' on pre-validation rejection', (done) => run(method, { preFailure: true }, done));
+        it('skips post-action on failed ' + method + ' write', (done) => run(method, { writeFailure: true }, done));
+        it('preserves ' + method + ' success and logs post-action rejection', (done) => run(method, { postFailure: true }, done));
+        it('preserves ' + method + ' success and logs post-action network failure', (done) => run(method, { networkFailure: true }, done));
+        [500, 502].forEach((status) => {
+            it('preserves ' + method + ' success when post-action returns ' + status, (done) =>
+                run(method, { postFailure: true, postStatus: status }, done));
+        });
+    });
+
+    it('calls back without an error when the post-action fails', function(done) {
+        const scope = hook('post-create', existing).reply(502, { error: 'Backend unavailable' });
+        api.executePostValidation({
+            method: 'POST', apiUrl: '/' + endpoint.path + collection,
+            status: 201, body: existing, user: user
+        }, (err) => {
+            expect(err).toBe(null);
+            expect(scope.isDone()).toBe(true);
+            expect(postLogger.warn).toHaveBeenCalled();
+            done();
+        });
+    });
+
+    ['GET', 'DELETE', 'PUT'].forEach((method) => {
+        it('skips post-action for ' + method, function(done) {
+            api.executePostValidation({ method: method, apiUrl: '/' + endpoint.path + collection + '/spec-1', status: 200 }, (err) => {
+                expect(err).toBe(null);
+                done();
+            });
+        });
+    });
+
+    [400, 409, 500].forEach((status) => {
+        it('guards against post-actions on failed catalog status ' + status, function(done) {
+            api.executePostValidation({ method: 'POST', apiUrl: '/' + endpoint.path + collection, status: status }, (err) => {
+                expect(err).toBe(null);
+                done();
+            });
+        });
+    });
+});
