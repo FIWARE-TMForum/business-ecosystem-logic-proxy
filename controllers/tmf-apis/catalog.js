@@ -2715,33 +2715,7 @@ const catalog = (function() {
         }
     }
 
-    const handleUpgradePostAction = function(req, body, storeMethod, callback) {
-        var getURLId = function(apiUrl) {
-            return apiUrl.split('/')[6];
-        };
-
-        // Check if the product has been upgraded
-        if (!!body.version && !!body.productSpecCharacteristic) {
-            var id = !!body.id ? body.id : getURLId(req.apiUrl);
-
-            // Notify the error to the charging backend to downgrade the asset
-            return storeMethod(
-                {
-                    id: id,
-                    version: body.version,
-                    productSpecCharacteristic: body.productSpecCharacteristic
-                },
-                req.user,
-                () => {
-                    callback(null);
-                }
-            );
-        }
-        callback(null);
-    };
-
     const executePostValidation = function(req, callback) {
-        // Attach product spec info for product creation request
         let body;
 
         if (req.method == 'GET' && req.apiUrl.indexOf('/productOffering') > -1) {
@@ -2845,13 +2819,6 @@ const catalog = (function() {
                     })
                 }
             })
-        } else if (req.method == 'POST' && productsPattern.test(req.apiUrl)) {
-            body = req.body;
-            storeClient.attachProduct(
-                body,
-                req.user,
-                callback
-            );
         } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
             let catalog = '';
             body = req.body
@@ -2863,11 +2830,7 @@ const catalog = (function() {
             indexObject(req.user.partyId, body, catalog).then(() => {
             }).catch((err)=>{
             }).finally(() => {
-                storeClient.attachOffering(
-                    body,
-                    req.user,
-                    callback
-                );
+                callback(null);
             })
         } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
             body = req.body;
@@ -2881,49 +2844,23 @@ const catalog = (function() {
                 );
             })
         } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
-            body = req.reqBody;
             const removedCharacteristicIds = req.extraData && req.extraData.removedProductSpecCharacteristicIds;
             const productSpecificationId = req.extraData && req.extraData.productSpecificationId;
 
             if (productSpecificationId && Array.isArray(removedCharacteristicIds) && removedCharacteristicIds.length > 0) {
                 removeDeletedCharacteristicsFromPrices(productSpecificationId, removedCharacteristicIds)
-                    .then(() => {
-                        handleUpgradePostAction(
-                            req,
-                            body,
-                            storeClient.attachUpgradedProduct,
-                            callback
-                        );
-                    })
+                    .then(() => callback(null))
                     .catch(callback);
             } else {
-                handleUpgradePostAction(
-                    req,
-                    body,
-                    storeClient.attachUpgradedProduct,
-                    callback
-                );
+                callback(null);
             }
         } else {
             callback(null)
         }
     };
 
-    var handleAPIError = function(req, callback) {
-        if (productsPattern.test(req.apiUrl) && req.method == 'POST') {
-            var body = JSON.parse(req.reqBody);
-
-            // Notify the error to the charging backend to remove tha asset
-            storeClient.rollbackProduct(body, req.user, () => {
-                // No matter rollback status, return API message
-                callback(null);
-            });
-        } else if (productPattern.test(req.apiUrl) && req.method == 'PATCH') {
-            var body = JSON.parse(req.reqBody);
-            handleUpgradePostAction(req, body, storeClient.rollbackProductUpgrade, callback);
-        } else {
-            callback(null);
-        }
+    const handleAPIError = function(req, callback) {
+        callback(null);
     };
 
     const checkOfferingLaunch = function(req, res) {

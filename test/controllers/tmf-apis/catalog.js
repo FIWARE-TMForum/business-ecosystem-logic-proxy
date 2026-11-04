@@ -6756,7 +6756,8 @@ describe('Catalog API', function() {
                 }
             });
 
-            catalogApi.executePostValidation(req, function() {
+            catalogApi.executePostValidation(req, function(err) {
+                expect(err).toBe(null);
                 validator(storeClientMock);
                 done();
             });
@@ -6996,7 +6997,7 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should call the store product attachment when a valid product creation request has been redirected', function(done) {
+        it('should preserve the product creation response without a store attachment', function(done) {
             var req = {
                 method: 'POST',
                 apiUrl: '/productSpecification',
@@ -7007,7 +7008,8 @@ describe('Catalog API', function() {
             testPostValidation(
                 req,
                 (storeMock) => {
-                    expect(storeMock.attachProduct).toHaveBeenCalledWith(body, user, jasmine.any(Function));
+                    expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                    expect(req.body).toBe(body);
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
                     expect(storeMock.updateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
@@ -7036,7 +7038,7 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should call the offering attachment when the request is a product offering creation', function(done) {
+        it('should preserve the offering creation response without a store attachment', function(done) {
             var req = {
                 method: 'POST',
                 url: '/productOffering',
@@ -7048,12 +7050,39 @@ describe('Catalog API', function() {
                 req,
                 (storeMock) => {
                     expect(storeMock.attachProduct).not.toHaveBeenCalled();
-                    expect(storeMock.attachOffering).toHaveBeenCalledWith(body, user, jasmine.any(Function));
+                    expect(storeMock.attachOffering).not.toHaveBeenCalled();
+                    expect(req.body).toBe(body);
                     expect(storeMock.updateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
                 },
                 done
             );
+        });
+
+        [false, true].forEach((indexingFails) => {
+            it('should complete offering creation without attachment when indexing ' + (indexingFails ? 'fails' : 'succeeds'), function(done) {
+                const attachOffering = jasmine.createSpy('attachOffering');
+                const indexDocument = jasmine.createSpy('indexDocument').and.callFake(() =>
+                    indexingFails ? Promise.reject(new Error('Index unavailable')) : Promise.resolve()
+                );
+                const catalogApi = getCatalogApi({ storeClient: { attachOffering: attachOffering } }, {}, {}, {}, {
+                    indexDocument: indexDocument
+                });
+                const offering = { id: 'offer-1', lifecycleStatus: 'Active', category: [{ id: 'cat-1' }] };
+                const req = {
+                    method: 'POST', apiUrl: '/catalog/productOffering', url: '/catalog/catalog/catalog-1/productOffering',
+                    body: offering, user: user
+                };
+                catalogApi.executePostValidation(req, function(err) {
+                    expect(err).toBe(null);
+                    expect(attachOffering).not.toHaveBeenCalled();
+                    expect(indexDocument).toHaveBeenCalledWith('offering', offering.id, {
+                        relatedParty: user.partyId, catalog: 'catalog-1', lifecycleStatus: 'Active', category: ['cat-1']
+                    });
+                    expect(req.body).toBe(offering);
+                    done();
+                });
+            });
         });
 
         it('should call the offering update validation when the request is a product offering update', function(done) {
@@ -7287,35 +7316,20 @@ describe('Catalog API', function() {
             );
         });
 
-        // it('should notify the store when a product upgrade has finished', function(done) {
-        // 	var req = {
-        // 		method: 'PATCH',
-        // 		url: '/productSpecification/1',
-        // 		apiUrl: '/catalog/productSpecification/1',
-        // 		reqBody: upgrade,
-        // 		body: body,
-        // 		user: user
-        // 	};
-
-        // 	testPostValidation(
-        // 		req,
-        // 		(storeMock) => {
-        // 			expect(storeMock.attachProduct).not.toHaveBeenCalled();
-        // 			expect(storeMock.attachOffering).not.toHaveBeenCalled();
-        // 			expect(storeMock.updateOffering).not.toHaveBeenCalled();
-        // 			expect(storeMock.attachUpgradedProduct).toHaveBeenCalledWith(
-        // 				{
-        // 					id: '1',
-        // 					version: upgrade.version,
-        // 					productSpecCharacteristic: upgrade.productSpecCharacteristic
-        // 				},
-        // 				user,
-        // 				jasmine.any(Function)
-        // 			);
-        // 		},
-        // 		done
-        // 	);
-        // });
+        it('should preserve the upgraded product response without a store attachment', function(done) {
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/productSpecification/1',
+                reqBody: upgrade,
+                body: body,
+                user: user
+            };
+            testPostValidation(req, (storeMock) => {
+                expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+                expect(req.body).toBe(body);
+            }, done);
+        });
 
         it('should not notify the store when the product PATCH request is not an upgrade', function(done) {
             var req = {
@@ -7350,7 +7364,7 @@ describe('Catalog API', function() {
             const req = {
                 method: 'PATCH',
                 apiUrl: '/productSpecification/product-1',
-                reqBody: {},
+                reqBody: upgrade,
                 body: {
                     id: 'product-1'
                 },
@@ -7457,7 +7471,8 @@ describe('Catalog API', function() {
 
             var catalogApi = getCatalogApi(storeClient, {}, {}, {}, {});
 
-            catalogApi.handleAPIError(req, function() {
+            catalogApi.handleAPIError(req, function(err) {
+                expect(err).toBe(null);
                 validator(storeClientMock);
                 done();
             });
@@ -7479,7 +7494,20 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should call product creation rollback if the product creation has failed in the API', function(done) {
+        it('should preserve API failures without a product upgrade rollback', function(done) {
+            const req = {
+                method: 'PATCH',
+                apiUrl: '/productSpecification/1',
+                reqBody: JSON.stringify(upgrade),
+                user: user
+            };
+            testErrorHandler(req, (storeMock) => {
+                expect(storeMock.rollbackProduct).not.toHaveBeenCalled();
+                expect(storeMock.rollbackProductUpgrade).not.toHaveBeenCalled();
+            }, done);
+        });
+
+        it('should preserve API failures without a product creation rollback', function(done) {
             var req = {
                 method: 'POST',
                 apiUrl: '/productSpecification',
@@ -7490,38 +7518,13 @@ describe('Catalog API', function() {
             testErrorHandler(
                 req,
                 (storeMock) => {
-                    expect(storeMock.rollbackProduct).toHaveBeenCalledWith(body, user, jasmine.any(Function));
+                    expect(storeMock.rollbackProduct).not.toHaveBeenCalled();
                     expect(storeMock.rollbackProductUpgrade).not.toHaveBeenCalled();
                 },
                 done
             );
         });
 
-        // fit('should call the product upgrade rollback if the PATCH has failed in the API', function(done) {
-        // 	var req = {
-        // 		method: 'PATCH',
-        // 		apiUrl: '/productSpecification/1',
-        // 		reqBody: JSON.stringify(upgrade),
-        // 		user: user
-        // 	};
-
-        // 	testErrorHandler(
-        // 		req,
-        // 		(storeMock) => {
-        // 			expect(storeMock.rollbackProduct).not.toHaveBeenCalled();
-        // 			expect(storeMock.rollbackProductUpgrade).toHaveBeenCalledWith(
-        // 				{
-        // 					id: '1',
-        // 					version: upgrade.version,
-        // 					productSpecCharacteristic: upgrade.productSpecCharacteristic
-        // 				},
-        // 				user,
-        // 				jasmine.any(Function)
-        // 			);
-        // 		},
-        // 		done
-        // 	);
-        // });
     });
 
     describe('checkOfferingLaunch', function() {

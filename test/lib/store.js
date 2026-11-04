@@ -87,24 +87,8 @@ describe('Store Client', function() {
         testValidateAssetOk(PRODUCT_ASSET, 'validateProduct', 'create', 'https', done);
     });
 
-    it('should attach product', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'attachProduct', 'attach', 'http', done);
-    });
-
-    it('should rollback product creation', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'rollbackProduct', 'rollback_create', 'http', done);
-    });
-
     it('should validate product upgrade', function(done) {
         testValidateAssetOk(PRODUCT_ASSET, 'upgradeProduct', 'upgrade', 'http', done);
-    });
-
-    it('should notify product upgraded', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'attachUpgradedProduct', 'attach_upgrade', 'http', done);
-    });
-
-    it('should rollback product upgrade', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'rollbackProductUpgrade', 'rollback_upgrade', 'http', done);
     });
 
     // Offerings
@@ -115,10 +99,6 @@ describe('Store Client', function() {
 
     it('should validate offering (HTTPS)', function(done) {
         testValidateAssetOk(OFFERING_ASSET, 'validateOffering', 'create', 'https', done);
-    });
-
-    it('should attach offering info', function(done) {
-        testValidateAssetOk(OFFERING_ASSET, 'attachOffering', 'attach', 'https', done);
     });
 
     it('should notify offering update', function(done) {
