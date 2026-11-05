@@ -73,10 +73,6 @@ const INVALID_RELATED_PARTY = 'The field "relatedParty" can not be modified';
 const INVALID_CATEGORY_ID = 'Invalid category with id: ';
 const CATEGORY_CANNOT_BE_CHECKED = ['It was impossible to check if the category with id: ', ' already exists'];
 
-const UPGRADE_ASSET_NOT_PROVIDED = 'To upgrade product specifications it is required to provide new asset info';
-const UPGRADE_VERSION_NOT_PROVIDED = 'Product specification characteristics only can be updated for upgrading digital products';
-const UPGRADE_CUSTOM_CHAR_MOD = 'It is not allowed to update custom characteristics during a product upgrade';
-const INVALID_NON_DIGITAL_UPGRADE = 'Product spec characteristics cannot be updated';
 const INVALID_S_LAUNCH = 'It is not allowed to launch a product spec without launching service spec previously'
 const INVALID_R_LAUNCH = 'It is not allowed to launch a product spec without launching resource spec previously'
 const INVALID_S_API = 'Error getting service specification through the API'
@@ -109,6 +105,14 @@ describe('Catalog API', function() {
         jwt,
         x509Certificate
     ) {
+        storeClient = storeClient || {};
+        storeClient.storeClient = storeClient.storeClient || {};
+        ['updateProduct', 'updateOffering'].forEach((method) => {
+            if (!storeClient.storeClient[method]) {
+                storeClient.storeClient[method] = jasmine.createSpy(method).and.callFake((body, user, callback) => callback(null, { status: 200 }));
+            }
+        });
+
         if (!rssClient) {
             rssClient = {};
         }
@@ -4777,345 +4781,44 @@ describe('Catalog API', function() {
         testUpdateProductSpec(productBody, offeringsInfo, 500, OFFERINGS_NOT_RETRIEVED, done);
     });
 
-    // UPGRADES
-
-    var testUpgradeProductSpec = function(prevBody, productBody, errorStatus, errorMsg, storeClient, done) {
-        var productId = '7';
-        var productPath = '/productSpecification/' + productId;
-        var offeringsPath = '/productOffering?productSpecification.id=' + productId;
-
-        testChangeProductSpec(
-            productPath,
-            offeringsPath,
-            prevBody,
-            JSON.stringify(productBody),
-            null,
-            errorStatus,
-            errorMsg,
-            done,
-            storeClient
-        );
-    };
-
-    var testNonDigitalUpgrade = function(newBody, errorStatus, errorMsg, done) {
-        var prevBody = {
-            version: '1.0',
-            lifecycleStatus: 'Active',
-            validFor: {},
+    describe('Product version and characteristic updates', function() {
+        const previous = {
+            id: '7', version: '1.0', lifecycleStatus: 'Active', validFor: {},
             productSpecCharacteristic: [
-                {
-                    name: 'Color',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'blue'
-                        },
-                        {
-                            value: 'green'
-                        }
-                    ]
-                }
+                { name: 'media type', productSpecCharacteristicValue: [{ value: 'JSON' }] },
+                { name: 'asset type', productSpecCharacteristicValue: [{ value: 'example' }] },
+                { name: 'location', productSpecCharacteristicValue: [{ value: 'http://example.org' }] },
+                { name: 'Color', productSpecCharacteristicValue: [{ value: 'blue' }] }
             ]
         };
-
-        testUpgradeProductSpec(prevBody, newBody, errorStatus, errorMsg, null, done);
-    };
-
-    it('should allow to upgrade a non-digital product when the characteristics are provided', function(done) {
-        var newBody = {
-            version: '1.1',
-            productSpecCharacteristic: [
-                {
-                    name: 'Color',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'blue'
-                        },
-                        {
-                            value: 'green'
-                        }
-                    ]
-                }
-            ]
-        };
-        testNonDigitalUpgrade(newBody, null, null, done);
-    });
-
-    it('should allow to upgrade a non-digital product when the characteristics are not provided', function(done) {
-        var newBody = {
-            version: '1.1'
-        };
-        testNonDigitalUpgrade(newBody, null, null, done);
-    });
-
-    /*it('should not allow to upgrade a non-digital product when the characteristics are provided', function(done) {
-        var newBody = {
-            version: '1.1',
-            productSpecCharacteristic: [
-                {
-                    name: 'Color',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'blue'
-                        },
-                        {
-                            value: 'red'
-                        }
-                    ]
-                }
-            ]
-        };
-        testNonDigitalUpgrade(newBody, 422, INVALID_NON_DIGITAL_UPGRADE, done);
-    });*/
-
-    var testDigitalUpgrade = function(newBody, errorStatus, errorMsg, done) {
-        var storeClient = jasmine.createSpyObj('storeClient', ['upgradeProduct']);
-        storeClient.upgradeProduct.and.callFake((data, user, callback) => {
-            callback(null);
+        const updatedCharacteristics = [
+            { name: 'media type', productSpecCharacteristicValue: [{ value: 'XML' }] },
+            { name: 'asset type', productSpecCharacteristicValue: [{ value: 'changed' }] },
+            { name: 'location', productSpecCharacteristicValue: [{ value: 'http://changed.example.org' }] },
+            { name: 'Color', productSpecCharacteristicValue: [{ value: 'red' }] }
+        ];
+        [
+            { version: '1.1' },
+            { version: '1.1', productSpecCharacteristic: updatedCharacteristics },
+            { version: '1.0', productSpecCharacteristic: updatedCharacteristics },
+            { productSpecCharacteristic: updatedCharacteristics },
+            { productSpecCharacteristic: [{ name: 'Color', productSpecCharacteristicValue: [{ value: 'green' }] }] },
+            { productSpecCharacteristic: [] },
+            { description: 'Ordinary update' }
+        ].forEach((patch) => {
+            it('uses update validation for ' + JSON.stringify(patch), function(done) {
+                const updateProduct = jasmine.createSpy('updateProduct').and.callFake((body, user, callback) =>
+                    callback(null, { status: 200 }));
+                testChangeProductSpec('/productSpecification/7', '/productOffering?productSpecification.id=7',
+                    previous, JSON.stringify(patch), null, null, null, () => {
+                        expect(updateProduct.calls.count()).toBe(1);
+                        expect(updateProduct).toHaveBeenCalledWith(
+                            Object.assign({}, previous, patch),
+                            { id: 'test', roles: [{ name: config.roles.seller }] }, jasmine.any(Function));
+                        done();
+                    }, { storeClient: { updateProduct: updateProduct } });
+            });
         });
-
-        var prevBody = {
-            id: 2,
-            version: '1.0',
-            lifecycleStatus: 'Active',
-            validFor: {},
-            productSpecCharacteristic: [
-                {
-                    name: 'speed',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: '100mb'
-                        }
-                    ]
-                },
-                {
-                    name: 'media type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'JSON'
-                        }
-                    ]
-                },
-                {
-                    name: 'location',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'http://assset.com'
-                        }
-                    ]
-                },
-                {
-                    name: 'asset type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'basic service'
-                        }
-                    ]
-                }
-            ]
-        };
-
-        testUpgradeProductSpec(prevBody, newBody, errorStatus, errorMsg, { storeClient: storeClient }, () => {
-            // Check store client call
-            if (!errorMsg) {
-                expect(storeClient.upgradeProduct).toHaveBeenCalledWith(
-                    {
-                        id: prevBody.id,
-                        version: newBody.version,
-                        productSpecCharacteristic: newBody.productSpecCharacteristic
-                    },
-                    {
-                        id: 'test',
-                        roles: [{ name: config.roles.seller }]
-                    },
-                    jasmine.any(Function)
-                );
-            } else {
-                expect(storeClient.upgradeProduct).not.toHaveBeenCalled();
-            }
-            done();
-        });
-    };
-
-    it('should upgrade a digital product when the new characteristics and version are provided', function(done) {
-        var newVersion = {
-            version: '1.1',
-            lifecycleStatus: 'Active',
-            productSpecCharacteristic: [
-                {
-                    name: 'speed',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: '100mb'
-                        }
-                    ]
-                },
-                {
-                    name: 'media type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'JSON'
-                        }
-                    ]
-                },
-                {
-                    name: 'location',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'http://assetv2.com'
-                        }
-                    ]
-                },
-                {
-                    name: 'asset type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'basic service'
-                        }
-                    ]
-                }
-            ]
-        };
-
-        testDigitalUpgrade(newVersion, null, null, done);
-    });
-
-    it('should not upgrade a digital product when the asset is not provided', function(done) {
-        var newVersion = {
-            version: '1.1',
-            lifecycleStatus: 'Active',
-            productSpecCharacteristic: [
-                {
-                    name: 'speed',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: '100mb'
-                        }
-                    ]
-                }
-            ]
-        };
-
-        testDigitalUpgrade(newVersion, 422, UPGRADE_ASSET_NOT_PROVIDED, done);
-    });
-
-    it('should not upgrade a digital product when the new version is not provided', function(done) {
-        var newVersion = {
-            lifecycleStatus: 'Active',
-            productSpecCharacteristic: [
-                {
-                    name: 'speed',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: '100mb'
-                        }
-                    ]
-                },
-                {
-                    name: 'media type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'JSON'
-                        }
-                    ]
-                },
-                {
-                    name: 'location',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'http://assetv2.com'
-                        }
-                    ]
-                },
-                {
-                    name: 'asset type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'basic service'
-                        }
-                    ]
-                }
-            ]
-        };
-
-        testDigitalUpgrade(newVersion, 422, UPGRADE_VERSION_NOT_PROVIDED, done);
-    });
-
-    it('should not upgrade a digital product when the new version is equal to the previous one', function(done) {
-        var newVersion = {
-            version: '1.0',
-            lifecycleStatus: 'Active',
-            productSpecCharacteristic: [
-                {
-                    name: 'speed',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: '100mb'
-                        }
-                    ]
-                },
-                {
-                    name: 'media type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'JSON'
-                        }
-                    ]
-                },
-                {
-                    name: 'location',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'http://assetv2.com'
-                        }
-                    ]
-                },
-                {
-                    name: 'asset type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'basic service'
-                        }
-                    ]
-                }
-            ]
-        };
-
-        testDigitalUpgrade(newVersion, 422, UPGRADE_VERSION_NOT_PROVIDED, done);
-    });
-
-    it('should not upgrade a digital product when the custom characteristics are modified', function(done) {
-        var newVersion = {
-            version: '1.1',
-            lifecycleStatus: 'Active',
-            productSpecCharacteristic: [
-                {
-                    name: 'media type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'JSON'
-                        }
-                    ]
-                },
-                {
-                    name: 'location',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'http://assetv2.com'
-                        }
-                    ]
-                },
-                {
-                    name: 'asset type',
-                    productSpecCharacteristicValue: [
-                        {
-                            value: 'basic service'
-                        }
-                    ]
-                }
-            ]
-        };
-
-        testDigitalUpgrade(newVersion, 422, UPGRADE_CUSTOM_CHAR_MOD, done);
     });
 
     // Bundles
@@ -6711,6 +6414,109 @@ describe('Catalog API', function() {
     // 	});
     });
 
+    describe('Charging ordinary update validation', function() {
+        const configuredUtils = proxyquire('../../../lib/utils', { './../config.js': config });
+        const client = proxyquire('../../../lib/store', {
+            './../config': config, './utils': configuredUtils
+        }).storeClient;
+        const catalogEndpoint = config.endpoints.catalog;
+        const catalogUrl = configuredUtils.getAPIURL(catalogEndpoint.appSsl, catalogEndpoint.host, catalogEndpoint.port, '');
+        const charging = config.endpoints.charging;
+        const backendUrl = configuredUtils.getAPIURL(charging.appSsl, charging.host, charging.port, '');
+        const provider = {
+            id: 'provider', partyId: 'provider-party', accessToken: 'provider-token',
+            email: 'provider@example.org', displayName: 'Provider', roles: [{ name: config.roles.seller }]
+        };
+
+        function check(type, backendStatus, characteristics, owned, done) {
+            const product = {
+                id: 'product-1', name: 'Product', lifecycleStatus: 'Active', version: '1.0', validFor: {},
+                relatedParty: [{ id: provider.partyId, role: config.roles.seller }],
+                productSpecCharacteristic: [
+                    { name: 'Color', productSpecCharacteristicValue: [{ value: 'blue' }] },
+                    { name: 'asset type', productSpecCharacteristicValue: [{ value: 'ordinary value' }] },
+                    { name: 'media type', productSpecCharacteristicValue: [{ value: 'JSON' }] },
+                    { name: 'location', productSpecCharacteristicValue: [{ value: 'http://example.org' }] }
+                ]
+            };
+            const previous = type === 'product' ? product : {
+                id: 'offer-1', name: 'Offering', lifecycleStatus: 'Active', validFor: {},
+                productSpecification: { id: product.id }, relatedParty: product.relatedParty,
+                prodSpecCharValueUse: [{ name: 'Color' }]
+            };
+            const collection = type === 'product' ? 'productSpecification' : 'productOffering';
+            const characteristicField = type === 'product' ? 'productSpecCharacteristic' : 'prodSpecCharValueUse';
+            const patch = { description: 'Updated' };
+            if (type === 'offering') patch['@schemaLocation'] = config.offeringSchema;
+            if (characteristics !== undefined) patch[characteristicField] = characteristics;
+            const proposed = Object.assign({}, previous, patch);
+            const path = '/' + collection + '/' + previous.id;
+            nock(catalogUrl).get('/api' + path).reply(200, previous);
+            if (type === 'offering') nock(catalogUrl).get('/api/productSpecification/' + product.id).reply(200, product);
+            const job = charging.apiPath + '/charging/api/assetManagement/assets/' + (type === 'product' ? 'validateJob' : 'offeringJob');
+            const order = [];
+            let pre = nock(backendUrl, { reqheaders: {
+                authorization: 'Bearer provider-token', 'content-type': 'application/json', 'x-party-id': provider.partyId
+            } }).post(job, { action: 'update', [type]: proposed });
+            pre = backendStatus === 'network' ? pre.replyWithError('Connection reset') : pre.reply(backendStatus, () => {
+                order.push('update'); return { error: 'Update rejected' };
+            });
+            const saved = Object.assign({}, proposed, { href: '/saved/' + previous.id });
+            const write = nock(catalogUrl).patch('/api' + path, patch).reply(200, () => {
+                order.push('write'); return saved;
+            }, { 'content-type': 'application/json' });
+            const post = nock(backendUrl).post(job, { action: 'post-update', [type]: saved }).reply(200, () => {
+                order.push('post-update'); return {};
+            });
+            const api = getCatalogApi({ storeClient: client }, {
+                isOwner: () => owned, validateCharacteristics: () => true,
+                validateDescriptionField: () => null
+            }, configuredUtils, {}, {
+                updateDocument: () => Promise.resolve()
+            });
+            const tmf = proxyquire('../../../controllers/tmf', {
+                './../config': config, './../lib/utils': configuredUtils, './../lib/logger': testUtils.emptyLogger,
+                './tmf-apis/catalog': { catalog: api }
+            }).tmf();
+            const req = {
+                method: 'PATCH', user: provider, apiUrl: '/catalog' + path, url: '/catalog' + path,
+                body: JSON.stringify(patch), headers: {}, connection: { remoteAddress: '127.0.0.1' }, get: () => undefined
+            };
+            const res = jasmine.createSpyObj('res', ['status', 'json', 'setHeader', 'end']);
+            res.status.and.returnValue(res);
+            res.json.and.callFake((body) => {
+                if (!owned) {
+                    expect(res.status).toHaveBeenCalledWith(403);
+                    expect(pre.isDone()).toBe(false);
+                } else if (backendStatus !== 200) {
+                    expect(res.status).toHaveBeenCalledWith(backendStatus === 'network' ? 504 : backendStatus === 202 ? 502 : backendStatus);
+                    expect(pre.isDone()).toBe(true);
+                } else {
+                    expect(res.status).toHaveBeenCalledWith(200);
+                    expect(body).toEqual(saved);
+                    expect(order).toEqual(['update', 'write', 'post-update']);
+                }
+                expect(write.isDone()).toBe(owned && backendStatus === 200);
+                expect(post.isDone()).toBe(owned && backendStatus === 200);
+                done();
+            });
+            tmf.checkPermissions(req, res);
+        }
+
+        ['product', 'offering'].forEach((type) => {
+            [undefined, [], [{ name: 'New characteristic' }]].forEach((characteristics) => {
+                it('validates complete proposed ' + type + ' including characteristics ' + JSON.stringify(characteristics), (done) =>
+                    check(type, 200, characteristics, true, done));
+            });
+            [400, 403, 409, 422, 500, 202, 'network'].forEach((status) => {
+                it('blocks ' + type + ' write and post-update on validation result ' + status, (done) =>
+                    check(type, status, undefined, true, done));
+            });
+            it('preserves ownership checks before ' + type + ' backend validation', (done) =>
+                check(type, 200, undefined, false, done));
+        });
+    });
+
     describe('Post validation', function() {
         var body = {
             id: '1'
@@ -6726,7 +6532,7 @@ describe('Catalog API', function() {
             catalog: '1'
         };
 
-        var upgrade = {
+        var versionUpdate = {
             version: '1.1',
             productSpecCharacteristic: []
         };
@@ -6736,7 +6542,7 @@ describe('Catalog API', function() {
                 cb(null);
             };
 
-            var storeMethods = ['attachProduct', 'attachOffering', 'updateOffering', 'attachUpgradedProduct'];
+            var storeMethods = ['attachProduct', 'attachOffering', 'postUpdateOffering', 'attachUpgradedProduct', 'postCreateProduct', 'postUpdateProduct', 'postCreateOffering'];
             var storeClientMock = jasmine.createSpyObj('storeClient', storeMethods);
 
             storeMethods.forEach((method) => {
@@ -6756,12 +6562,92 @@ describe('Catalog API', function() {
                 }
             });
 
+            if (req.status == null) req.status = 200;
             catalogApi.executePostValidation(req, function(err) {
                 expect(err).toBe(null);
                 validator(storeClientMock);
                 done();
             });
         };
+
+        describe('Charging post-action signals', function() {
+            const backendConfig = config.endpoints.charging;
+            const backend = (backendConfig.appSsl ? 'https' : 'http') + '://' + backendConfig.host + ':' + backendConfig.port;
+            const backendUtils = proxyquire('../../../lib/utils', { './../config.js': config });
+            const backendClient = proxyquire('../../../lib/store', {
+                './../config': config, './utils': backendUtils
+            }).storeClient;
+            const provider = {
+                id: 'provider', partyId: 'provider-party', userId: 'operator',
+                accessToken: 'provider-token', email: 'provider@example.org', displayName: 'Provider',
+                roles: [{ name: config.roles.seller }]
+            };
+
+            ['product', 'offering'].forEach((type) => {
+                ['POST', 'PATCH'].forEach((method) => {
+                    [200, 422, 502, 'network'].forEach((backendStatus) => {
+                        it('sends ' + type + ' ' + method + ' post-action and preserves success on backend result ' + backendStatus, function(done) {
+                            const log = jasmine.createSpyObj('postLogger', ['info', 'warn', 'debug', 'error']);
+                            spyOn(testUtils.emptyLogger.logger, 'getLogger').and.returnValue(log);
+                            const indexDocument = jasmine.createSpy('indexDocument').and.returnValue(Promise.resolve());
+                            const updateDocument = jasmine.createSpy('updateDocument').and.returnValue(Promise.resolve());
+                            const catalogApi = getCatalogApi({ storeClient: backendClient }, {}, {}, {}, { indexDocument, updateDocument });
+                            const saved = {
+                                id: 'saved-1', href: '/saved/saved-1', name: 'Saved representation', version: '2.0',
+                                lifecycleStatus: 'Active', relatedParty: [{ id: provider.partyId, role: config.roles.seller }]
+                            };
+                            if (type === 'product') saved.productSpecCharacteristic = [{ name: 'Plugin type', valueType: 'string' }];
+                            else saved.productSpecification = { id: 'product-1' };
+                            const action = method === 'POST' ? 'post-create' : 'post-update';
+                            const collection = type === 'product' ? 'productSpecification' : 'productOffering';
+                            const req = {
+                                status: method === 'POST' ? 201 : 200, method: method,
+                                apiUrl: '/catalog/' + collection + (method === 'POST' ? '' : '/saved-1'),
+                                url: '/catalog/' + collection, user: provider, body: saved,
+                                reqBody: JSON.stringify({ name: 'Partial original request' })
+                            };
+                            const path = backendConfig.apiPath + '/charging/api/assetManagement/assets/' +
+                                (type === 'product' ? 'validateJob' : 'offeringJob');
+                            let scope = nock(backend, { reqheaders: {
+                                authorization: 'Bearer provider-token', 'x-party-id': provider.partyId,
+                                'x-actor-id': provider.id, 'content-type': 'application/json'
+                            } }).post(path, { action: action, [type]: saved });
+                            scope = backendStatus === 'network' ? scope.replyWithError('Connection reset')
+                                : scope.reply(backendStatus, { error: 'Plugin rejected post-action' });
+                            catalogApi.executePostValidation(req, function(err) {
+                                expect(err).toBe(null);
+                                expect(scope.isDone()).toBe(true);
+                                expect(req.body).toBe(saved);
+                                expect(req.status).toBe(method === 'POST' ? 201 : 200);
+                                if (backendStatus === 200) expect(log.warn).not.toHaveBeenCalled();
+                                else {
+                                    expect(log.warn.calls.count()).toBe(1);
+                                    expect(log.warn.calls.argsFor(0)[0]).toContain(saved.id);
+                                    expect(log.warn.calls.argsFor(0)[0]).toContain(action + ' failed');
+                                }
+                                if (type === 'offering') {
+                                    expect(method === 'POST' ? indexDocument : updateDocument).toHaveBeenCalled();
+                                }
+                                done();
+                            });
+                        });
+                    });
+
+                    it('never sends ' + type + ' ' + method + ' post-actions after a failed TMForum write', function(done) {
+                        const client = jasmine.createSpyObj('storeClient', ['postCreateProduct', 'postUpdateProduct', 'postCreateOffering', 'postUpdateOffering']);
+                        const catalogApi = getCatalogApi({ storeClient: client }, {}, {}, {}, {});
+                        const collection = type === 'product' ? 'productSpecification' : 'productOffering';
+                        catalogApi.executePostValidation({
+                            method: method, status: 409, apiUrl: '/catalog/' + collection + (method === 'POST' ? '' : '/saved-1')
+                        }, function(err) {
+                            expect(err).toBe(null);
+                            Object.keys(client).forEach((key) => expect(client[key]).not.toHaveBeenCalled());
+                            done();
+                        });
+                    });
+                });
+            });
+        });
 
         const protocol = config.endpoints.catalog.appSsl ? 'https' : 'http';
         const serverUrl = protocol + '://' + config.endpoints.catalog.host + ':' + config.endpoints.catalog.port;
@@ -7008,10 +6894,11 @@ describe('Catalog API', function() {
             testPostValidation(
                 req,
                 (storeMock) => {
+                    expect(storeMock.postCreateProduct).toHaveBeenCalledWith(body, user, jasmine.any(Function));
                     expect(storeMock.attachProduct).not.toHaveBeenCalled();
                     expect(req.body).toBe(body);
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
-                    expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                    expect(storeMock.postUpdateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
                 },
                 done
@@ -7031,7 +6918,7 @@ describe('Catalog API', function() {
                 (storeMock) => {
                     expect(storeMock.attachProduct).not.toHaveBeenCalled();
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
-                    expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                    expect(storeMock.postUpdateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
                 },
                 done
@@ -7050,9 +6937,10 @@ describe('Catalog API', function() {
                 req,
                 (storeMock) => {
                     expect(storeMock.attachProduct).not.toHaveBeenCalled();
+                    expect(storeMock.postCreateOffering).toHaveBeenCalledWith(body, user, jasmine.any(Function));
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
                     expect(req.body).toBe(body);
-                    expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                    expect(storeMock.postUpdateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
                 },
                 done
@@ -7062,20 +6950,22 @@ describe('Catalog API', function() {
         [false, true].forEach((indexingFails) => {
             it('should complete offering creation without attachment when indexing ' + (indexingFails ? 'fails' : 'succeeds'), function(done) {
                 const attachOffering = jasmine.createSpy('attachOffering');
+                const postCreateOffering = jasmine.createSpy('postCreateOffering').and.callFake((body, user, cb) => cb(null));
                 const indexDocument = jasmine.createSpy('indexDocument').and.callFake(() =>
                     indexingFails ? Promise.reject(new Error('Index unavailable')) : Promise.resolve()
                 );
-                const catalogApi = getCatalogApi({ storeClient: { attachOffering: attachOffering } }, {}, {}, {}, {
+                const catalogApi = getCatalogApi({ storeClient: { attachOffering: attachOffering, postCreateOffering: postCreateOffering } }, {}, {}, {}, {
                     indexDocument: indexDocument
                 });
                 const offering = { id: 'offer-1', lifecycleStatus: 'Active', category: [{ id: 'cat-1' }] };
                 const req = {
-                    method: 'POST', apiUrl: '/catalog/productOffering', url: '/catalog/catalog/catalog-1/productOffering',
+                    method: 'POST', status: 201, apiUrl: '/catalog/productOffering', url: '/catalog/catalog/catalog-1/productOffering',
                     body: offering, user: user
                 };
                 catalogApi.executePostValidation(req, function(err) {
                     expect(err).toBe(null);
                     expect(attachOffering).not.toHaveBeenCalled();
+                    expect(postCreateOffering).toHaveBeenCalledWith(offering, user, jasmine.any(Function));
                     expect(indexDocument).toHaveBeenCalledWith('offering', offering.id, {
                         relatedParty: user.partyId, catalog: 'catalog-1', lifecycleStatus: 'Active', category: ['cat-1']
                     });
@@ -7085,7 +6975,7 @@ describe('Catalog API', function() {
             });
         });
 
-        it('should call the offering update validation when the request is a product offering update', function(done) {
+        it('should send offering post-update when the request is a product offering update', function(done) {
             var req = {
                 method: 'PATCH',
                 url: '/productOffering/1',
@@ -7098,7 +6988,7 @@ describe('Catalog API', function() {
                 (storeMock) => {
                     expect(storeMock.attachProduct).not.toHaveBeenCalled();
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
-                    expect(storeMock.updateOffering).toHaveBeenCalledWith(body, user, jasmine.any(Function));
+                    expect(storeMock.postUpdateOffering).toHaveBeenCalledWith(body, user, jasmine.any(Function));
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
                 },
                 done
@@ -7118,7 +7008,7 @@ describe('Catalog API', function() {
                 (storeMock) => {
                     expect(storeMock.attachProduct).not.toHaveBeenCalled();
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
-                    expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                    expect(storeMock.postUpdateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
                 },
                 done
@@ -7316,25 +7206,27 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should preserve the upgraded product response without a store attachment', function(done) {
+        it('should preserve the version update response without a store attachment', function(done) {
             const req = {
                 method: 'PATCH',
                 apiUrl: '/productSpecification/1',
-                reqBody: upgrade,
+                reqBody: versionUpdate,
                 body: body,
                 user: user
             };
             testPostValidation(req, (storeMock) => {
                 expect(storeMock.attachProduct).not.toHaveBeenCalled();
                 expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
+                expect(storeMock.postUpdateProduct).toHaveBeenCalledWith(body, user, jasmine.any(Function));
                 expect(req.body).toBe(body);
             }, done);
         });
 
-        it('should not notify the store when the product PATCH request is not an upgrade', function(done) {
+        it('should send post-update for an ordinary product PATCH', function(done) {
             var req = {
                 method: 'PATCH',
                 url: '/productSpecification/1',
+                apiUrl: '/catalog/productSpecification/1',
                 reqBody: body,
                 body: body,
                 user: user
@@ -7343,9 +7235,10 @@ describe('Catalog API', function() {
             testPostValidation(
                 req,
                 (storeMock) => {
+                    expect(storeMock.postUpdateProduct).toHaveBeenCalledWith(body, user, jasmine.any(Function));
                     expect(storeMock.attachProduct).not.toHaveBeenCalled();
                     expect(storeMock.attachOffering).not.toHaveBeenCalled();
-                    expect(storeMock.updateOffering).not.toHaveBeenCalled();
+                    expect(storeMock.postUpdateOffering).not.toHaveBeenCalled();
                     expect(storeMock.attachUpgradedProduct).not.toHaveBeenCalled();
                 },
                 done
@@ -7364,7 +7257,7 @@ describe('Catalog API', function() {
             const req = {
                 method: 'PATCH',
                 apiUrl: '/productSpecification/product-1',
-                reqBody: upgrade,
+                reqBody: versionUpdate,
                 body: {
                     id: 'product-1'
                 },
@@ -7448,7 +7341,7 @@ describe('Catalog API', function() {
             username: 'test'
         };
 
-        var upgrade = {
+        var versionUpdate = {
             version: '1.1',
             productSpecCharacteristic: []
         };
@@ -7494,11 +7387,11 @@ describe('Catalog API', function() {
             );
         });
 
-        it('should preserve API failures without a product upgrade rollback', function(done) {
+        it('should preserve API failures without a version update rollback', function(done) {
             const req = {
                 method: 'PATCH',
                 apiUrl: '/productSpecification/1',
-                reqBody: JSON.stringify(upgrade),
+                reqBody: JSON.stringify(versionUpdate),
                 user: user
             };
             testErrorHandler(req, (storeMock) => {

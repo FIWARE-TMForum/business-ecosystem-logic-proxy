@@ -87,8 +87,20 @@ describe('Store Client', function() {
         testValidateAssetOk(PRODUCT_ASSET, 'validateProduct', 'create', 'https', done);
     });
 
-    it('should validate product upgrade', function(done) {
-        testValidateAssetOk(PRODUCT_ASSET, 'upgradeProduct', 'upgrade', 'http', done);
+    it('should send product post-create', function(done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'postCreateProduct', 'post-create', 'http', done);
+    });
+
+    it('should send product post-update', function(done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'postUpdateProduct', 'post-update', 'https', done);
+    });
+
+    it('should validate ordinary product updates', function(done) {
+        testValidateAssetOk(PRODUCT_ASSET, 'updateProduct', 'update', 'http', done);
+    });
+
+    it('should validate offering updates', function(done) {
+        testValidateAssetOk(OFFERING_ASSET, 'updateOffering', 'update', 'https', done);
     });
 
     // Offerings
@@ -101,8 +113,12 @@ describe('Store Client', function() {
         testValidateAssetOk(OFFERING_ASSET, 'validateOffering', 'create', 'https', done);
     });
 
+    it('should send offering post-create', function(done) {
+        testValidateAssetOk(OFFERING_ASSET, 'postCreateOffering', 'post-create', 'http', done);
+    });
+
     it('should notify offering update', function(done) {
-        testValidateAssetOk(OFFERING_ASSET, 'updateOffering', 'update', 'https', done);
+        testValidateAssetOk(OFFERING_ASSET, 'postUpdateOffering', 'post-update', 'https', done);
     });
 
     const testValidateProductError = function(assetType, errorStatus, response, expectedErrMsg, done) {

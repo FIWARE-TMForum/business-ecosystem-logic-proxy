@@ -1249,76 +1249,7 @@ const catalog = (function() {
                     'It is not allowed to update bundle related attributes (isBundle, bundledProductSpecification) in launched products'
             });
         }
-        async.series([
-            function(callback){
-                checkDependencySpecs(prevBody, newBody, callback)
-            },
-            function(callback){
-                // Check upgrade problems if the product is a digital one
-                if (tmfUtils.isDigitalProduct(prevBody.productSpecCharacteristic)) {
-                    if (
-                        !!newBody.version &&
-                        !tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
-                        newBody.version != prevBody.version
-                    ) {
-                        // Trying to upgrade the product without providing new asset info
-                        return callback({
-                            status: 422,
-                            message: 'To upgrade product specifications it is required to provide new asset info'
-                        });
-                    }
-
-                    if (
-                        (!!newBody.version && newBody.version == prevBody.version) ||
-                        (typeof newBody.version === 'undefined' &&
-                            !!newBody.productSpecCharacteristic &&
-                            !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic))
-                    ) {
-                        return callback({
-                            status: 422,
-                            message: 'Product specification characteristics only can be updated for upgrading digital products'
-                        });
-                    }
-
-                    if (
-                        !!newBody.version &&
-                        newBody.version != prevBody.version &&
-                        tmfUtils.isDigitalProduct(newBody.productSpecCharacteristic) &&
-                        !tmfUtils.equalCustomCharacteristics(
-                            newBody.productSpecCharacteristic,
-                            prevBody.productSpecCharacteristic
-                        )
-                    ) {
-                        return callback({
-                            status: 422,
-                            message: 'It is not allowed to update custom characteristics during a product upgrade'
-                        });
-                    }
-
-                    if (!!newBody.version && newBody.version != prevBody.version && !!newBody.productSpecCharacteristic) {
-                        return storeClient.upgradeProduct(
-                            {
-                                id: prevBody.id,
-                                version: newBody.version,
-                                productSpecCharacteristic: newBody.productSpecCharacteristic
-                            },
-                            req.user,
-                            callback
-                        );
-                    }
-                } /*else if (
-                    !!newBody.productSpecCharacteristic &&
-                    !equal(newBody.productSpecCharacteristic, prevBody.productSpecCharacteristic)
-                ) {
-                    return callback({
-                        status: 422,
-                        message: 'Product spec characteristics cannot be updated'
-                    });
-                }*/
-
-                return callback(null);
-            },
-        ], callback)
+        checkDependencySpecs(prevBody, newBody, callback);
     };
 
     const validateProduct = function(req, productSpec, previousProductSpec, callback) {
@@ -2309,6 +2240,18 @@ const catalog = (function() {
         }
     };
 
+    const validateBackendUpdate = function(req, previousBody, parsedBody, storeMethod, callback) {
+        // Preserve omitted fields and collections; PATCH replaces supplied collections.
+        const proposed = Object.assign({}, previousBody, parsedBody, { id: previousBody.id });
+        storeMethod(proposed, req.user, (err, response) => {
+            if (err) return callback(err);
+            if (response.status !== 200) {
+                return callback({ status: 502, message: 'The charging backend did not complete update validation' });
+            }
+            callback(null);
+        });
+    };
+
     // Validate the modification of a resource
     const validateUpdate = function(req, callback) {
         const catalogsPattern = new RegExp('/catalog/[^/]+/?$');
@@ -2383,7 +2326,7 @@ const catalog = (function() {
                                 callback(err)
                             } else {
                                 req.apiUrl = `/catalog${url}`
-                                callback(null)
+                                validateBackendUpdate(req, previousBody, parsedBody, storeClient.updateOffering, callback)
                             }
                         });
                     } else if (pricePattern.test(req.apiUrl)) {
@@ -2455,7 +2398,10 @@ const catalog = (function() {
                                             }
                                         }
                                     ],
-                                    callback
+                                    (err) => {
+                                        if (err) return callback(err);
+                                        validateBackendUpdate(req, previousBody, parsedBody, storeClient.updateProduct, callback);
+                                    }
                                 );
                             } else {
                                 callback(null);
@@ -2715,7 +2661,21 @@ const catalog = (function() {
         }
     }
 
+    const notifyPostAction = function(req, action, storeMethod, callback) {
+        storeMethod(req.body, req.user, (err) => {
+            if (err) {
+                logger.warn(`The TMForum write for ${req.apiUrl} (${req.body && req.body.id}) succeeded, but charging backend ${action} failed: ${err.message}`);
+            }
+            callback(null);
+        });
+    };
+
     const executePostValidation = function(req, callback) {
+        if (req.status == null || req.status < 200 || req.status >= 300) {
+            return callback(null);
+        }
+
+        const path = (req.apiUrl || '').split('?')[0];
         let body;
 
         if (req.method == 'GET' && req.apiUrl.indexOf('/productOffering') > -1) {
@@ -2819,7 +2779,9 @@ const catalog = (function() {
                     })
                 }
             })
-        } else if (req.method == 'POST' && offeringsPattern.test(req.apiUrl)) {
+        } else if (req.method == 'POST' && productsPattern.test(path)) {
+            notifyPostAction(req, 'post-create', storeClient.postCreateProduct, callback);
+        } else if (req.method == 'POST' && offeringsPattern.test(path)) {
             let catalog = '';
             body = req.body
 
@@ -2830,30 +2792,28 @@ const catalog = (function() {
             indexObject(req.user.partyId, body, catalog).then(() => {
             }).catch((err)=>{
             }).finally(() => {
-                callback(null);
+                notifyPostAction(req, 'post-create', storeClient.postCreateOffering, callback);
             })
-        } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(req.apiUrl)) {
+        } else if ((req.method == 'PATCH' || req.method == 'PUT') && offeringPattern.test(path)) {
             body = req.body;
             updateindex(body).then(() => {
             }).catch((err) => {
             }).finally(() => {
-                storeClient.updateOffering(
-                    body,
-                    req.user,
-                    callback
-                );
+                notifyPostAction(req, 'post-update', storeClient.postUpdateOffering, callback);
             })
-        } else if (req.method == 'PATCH' && productPattern.test(req.apiUrl)) {
-            const removedCharacteristicIds = req.extraData && req.extraData.removedProductSpecCharacteristicIds;
-            const productSpecificationId = req.extraData && req.extraData.productSpecificationId;
+        } else if (req.method == 'PATCH' && productPattern.test(path)) {
+            notifyPostAction(req, 'post-update', storeClient.postUpdateProduct, () => {
+                const removedCharacteristicIds = req.extraData && req.extraData.removedProductSpecCharacteristicIds;
+                const productSpecificationId = req.extraData && req.extraData.productSpecificationId;
 
-            if (productSpecificationId && Array.isArray(removedCharacteristicIds) && removedCharacteristicIds.length > 0) {
-                removeDeletedCharacteristicsFromPrices(productSpecificationId, removedCharacteristicIds)
-                    .then(() => callback(null))
-                    .catch(callback);
-            } else {
-                callback(null);
-            }
+                if (productSpecificationId && Array.isArray(removedCharacteristicIds) && removedCharacteristicIds.length > 0) {
+                    removeDeletedCharacteristicsFromPrices(productSpecificationId, removedCharacteristicIds)
+                        .then(() => callback(null))
+                        .catch(callback);
+                } else {
+                    callback(null);
+                }
+            });
         } else {
             callback(null)
         }
