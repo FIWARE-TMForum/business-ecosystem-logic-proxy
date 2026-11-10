@@ -58,7 +58,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           tags: |
-            fiware/biz-ecosystem-logic-proxy:feat/sovereignity
+            fiware/biz-ecosystem-logic-proxy:11.27.0-rc1
           push: ${{ github.ref == 'refs/heads/feat/sovereignity' }}
 
       - name: Image digest
