@@ -514,7 +514,9 @@ const catalog = (function() {
                 const catalog = result.body;
                 if (catalog.category && catalog.category.length > 0) {
                     if (offeringBody.category) {
-                        offeringBody.category.push(catalog.category[0])
+                        if (!offeringBody.category.some((category) => category.id === catalog.category[0].id)) {
+                            offeringBody.category.push(catalog.category[0]);
+                        }
                     } else {
                         offeringBody.category = [catalog.category[0]];
                     }

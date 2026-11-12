@@ -7,6 +7,25 @@
     "_close": "Close",
     "_error": "Error"
   },
+  "ORGANIZATION_PROFILE_NOTICE": {
+    "_title": "Organization details incomplete",
+    "_intro": "needs {{details}} for marketplace operations.",
+    "_required_country": "a <strong>country</strong>",
+    "_required_email": "an <strong>email</strong>",
+    "_required_payment_info": "<strong>payment info</strong>",
+    "_and": "and",
+    "_member_message": "Ask your orgAdmin to complete {{organization}}'s details.",
+    "_contact_email": "Contact email",
+    "_payment_info": "Payment information",
+    "_select_country": "Select country",
+    "_country_required": "Country required.",
+    "_email_required": "Email required.",
+    "_email_invalid": "Invalid email.",
+    "_saving": "Saving…",
+    "_load_error": "Couldn't load details. Try again.",
+    "_save_error": "Couldn't save. Try again.",
+    "_retry": "Retry"
+  },
   "ERRORS": {
     "_error_prefix": "Error: {{message}}",
     "_reason": "Reason: {{reason}}"
